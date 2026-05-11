@@ -39,6 +39,18 @@ We assigned chromosome names using a synteny-based approach as implemented in [m
 
 We sequenced newly generated libraries on Illumina NovaSeq 6000 lanes to generate 150 bp paired-end reads. We then trimmed our sequence data with [Trimmomatic](https://github.com/usadellab/trimmomatic). We then followed [GATK's best practices workflow](https://gatk.broadinstitute.org/hc/en-us/sections/360007226651-Best-Practices-Workflows) to call and filter SNPs. The pipeline to perform this set of analyses is called `variant_calling.md`.
 
+*Software for Whole genome sequencing and variant calling*:
+- [Trimmomatic](https://github.com/usadellab/trimmomatic)
+- [GATK](https://gatk.broadinstitute.org/hc/en-us)
+- [bwa mem](https://github.com/lh3/BWA)
+- [samtools](https://github.com/samtools/samtools)
+- [bcftools](https://github.com/samtools/bcftools)
+- [parallel](https://www.gnu.org/software/parallel/)
+- [tabix](https://www.htslib.org/doc/tabix.html)
+- [mosdepth](https://github.com/brentp/mosdepth)
+- [bedtools](https://bedtools.readthedocs.io/en/latest/)
+- [picard](https://github.com/broadinstitute/picard)
+
 #### Workflow for analysis of the genomic landscape of introgression within Crotalus - Part 1 - Processing, mapping, and variant calling
 
 Author: Keaka Farleigh, edited from Drew Schield's workflow
@@ -408,9 +420,8 @@ cd ../
 
 We'll use relative read depths on the Z chromosome and autosomes to infer genetic sex of each individual.
 
-We'll extract mapping data for Chromosome 3, taking the median as an 'autosomal median', then compare levels of coverage for individuals to this value across the Z chromosome scaffold.
+We'll extract mapping data for Chromosome 4, taking the median as an 'autosomal median', then compare levels of coverage for individuals to this value across the Z chromosome scaffold.
 
-We already have these data for the barn swallow samples, so here we'll focus on the congeners.
 
 ### ###Set up environment
 
