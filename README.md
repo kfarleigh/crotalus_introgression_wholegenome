@@ -825,11 +825,36 @@ We estimated the admixture proportion (fd statistic; [Martin et al. (2015)](http
 
 ## Distinguishing introgression from incomplete lineage sorting
 
+We tested whether our observed patterns may have been produced by incomplete lineage sorting, rather than introgression, using analyses of linkage disequilibrium and absolute sequence divergence (dxy). 
+
+*Software for Distinguishing introgression from incomplete lineage sorting*:
+
+- Estimated linkage disequilibrium with [vcftools](https://vcftools.sourceforge.net/)
+- Estimated divergence measures with [pixy](https://pixy.readthedocs.io/en/latest/)
+- Processed and visualized results with [R](https://www.r-project.org/)
+
 ## Evolutionary and ecological divergence
+
+We calculated the evolutionary and ecological divergence to test the relationship between introgression and types of divergence.
+
+*Software for Evolutionary and ecological divergence*:
+
+- Estimating evolutionary divergence (branch lengths) with [RAxML](https://github.com/amkozlov/raxml-ng)
+- Estimating ecological divergence, processing, and visualizing results with [R](https://www.r-project.org/)
 
 ## Relationships between introgression, recombination, and divergent selection
 
+We tested the relationship between introgression, recombination rate, exon density, and relative differentiation (Fst). We used the output from previous steps (see above) in these tests.
+
+*Software for Relationships between introgression, recombination, and divergent selection*:
+
+- We tested these relationships in [R](https://www.r-project.org/)
+
 ## Identification of species barriers and fine-scale variation in introgression
 
+We identified outlier barrier windows and tested for differential signals of introgression in various genomic regions (e.g., venom, barrier windows) using fd statistics.
 
+*Software for Identification of species barriers and fine-scale variation in introgression*:
+
+- We tested these relationships in [R](https://www.r-project.org/)
 
