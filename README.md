@@ -40,6 +40,8 @@ You can jump to any of the relevant sections by clicking on the links below:
 - [Relationships between introgression, recombination, and divergent selection](https://github.com/kfarleigh/crotalus_introgression_wholegenome/tree/main#relationships-between-introgression-recombination-and-divergent-selection)
 - [Identification of species barriers and fine-scale variation in introgression](https://github.com/kfarleigh/crotalus_introgression_wholegenome/tree/main#identification-of-species-barriers-and-fine-scale-variation-in-introgression)
 
+You can also visit the [wiki](https://github.com/kfarleigh/crotalus_introgression_wholegenome/wiki) for a better webpage navigation experience.
+
 
 
 ------------------------------------------------------------------------------------------
