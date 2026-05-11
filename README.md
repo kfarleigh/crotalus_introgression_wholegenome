@@ -2001,6 +2001,388 @@ plot_grid(all_dat_pcaplot, auto_dat_pcaplot, z_dat_pcaplot, nrow = 1)
 
 ```
 
+# Purpose
+
+This script will use [smc++](https://github.com/popgenmethods/smcpp) to estimate effective population size over time. We will do this for every individual in each species and for just a single locality in each species. We will then use the locality inferences to inform our recombination rates that we estimate using [pyrho](https://github.com/popgenmethods/pyrho). 
+
+## Location 
+
+This analysis was performed in the Schield lab on Xenomorph at the University of Virginia. Xenomorph is a system76 workstation running Ubuntu v22.04.3.
+
+## What we'll need 
+
+
+We will need the mutation rate, generation time, and genotypes of our species. We will use the mutation rate and generation time from [Schield et al. (2022)](https://www.nature.com/articles/s41559-022-01829-5). We will use the vcf that we created previously. This vcf contains unphased genotypes. 
+
+**_Note_**. _smc++ uses per-generation mutation rate_. This is already what is provided in Schield et al. (2022), but make sure your mutation rate is correct. 
+
+Our per generation mutation rate is 2.4 x 10^-9 and our generation time is 3.3 years. 
+
+### Install smc++ and pyrho
+
+We will use docker to install smc++ since the authors of smc++ no longer support the conda distribution. First, we install docker since Xenomorph does not have docker already installed. I installed docker using [these instructions](https://docs.docker.com/desktop/setup/install/linux/ubuntu/), I will also list them below. **Note that you should expect an error when you install docker (see hyperlink to docker install)**. We do a test run after installing docker, to make sure that smc++ works. We specify `-h` to get help (and make sure smc++ runs). 
+
+```
+cd /usr/local 
+
+# Install docker
+sudo apt install gnome-terminal
+sudo apt-get update
+
+sudo apt-get install ./docker-desktop-amd64.deb
+
+# Run smc++
+sudo docker run --rm -v $PWD:/mnt terhorst/smcpp:latest -h
+
+```
+
+Now, we will install pyrho. We will do this using conda and create a pyrho environment. Pyrho has a dependency [ldpop](https://github.com/popgenmethods/ldpop), which requires us to clone a GitHub repository.
+
+
+```
+cd /usr/local
+
+# Create conda environment
+conda create pyrho
+conda activate pyrho
+
+# Clone and install ldpop
+git clone https://github.com/popgenmethods/ldpop.git ldpop
+
+pip3 install ldpop/
+
+# Clone and install pyrho 
+git clone https://github.com/popgenmethods/pyrho.git pyrho
+
+pip3 install pyrho/
+
+conda install conda-forge::msprime
+
+# Check that pyrho runs 
+python3 -m pytest pyrho/tests/tests.py
+
+```
+
+Nice, everything should be good to go. Let's set up our directory for smc++ and pull in the population map. 
+
+
+## Set up directory
+
+```
+ cd /media/queen/extradrive1/crotalus_genomic_landscape/analysis/
+ 
+ # smc++ all
+ mkdir smc++_all
+ 
+ cd smc++_all
+ 
+ mkdir out
+ 
+ mkdir analysis
+ 
+ mkdir vcf
+ 
+cp ../xp-ehh/shapeit2/Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt ./
+  
+  cd ..
+ 
+ # smc++ locality
+ mkdir smc++
+ 
+ cd smc++
+ 
+ mkdir out
+ 
+ mkdir analysis
+ 
+ mkdir vcf
+ 
+ 
+ # Get the population map 
+ 
+ cp ../xp-ehh/shapeit2/Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt ./ 
+ 
+ # pyrho
+ 
+ cd /media/queen/extradrive1/crotalus_genomic_landscape/analysis/
+
+```
+
+##### smc++ all
+
+We will use all individuals for each species with n > 1 to infer a demographic history. We will only use data from the autosomes. For *Crotalus pyrrhus*, we will use individuals from the continental population (n = 17).
+
+```
+# Pyrrhus
+grep "pyrrhus_continental" Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt | cut -f 1 > pyrrhus_inds.txt
+
+# Randomly select 5
+shuf -n 5 pyrrhus_inds.txt > pyrrhus.distinguished.list
+
+nohup bcftools view --threads 4 -S pyrrhus_inds.txt -c 1:minor -m2 -M2 -U -v snps -i 'F_MISSING<0.2' -O z -o ./vcf/pyrrhus.allsites.final.auto.snps.miss02.mac1.vcf.gz /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.auto.snps.vcf.gz > pyrrhus_extractvcf.log &
+
+# Stephensi
+grep "stephensi" Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt | cut -f 1 > stephensi_inds.txt
+
+# Randomly select 5
+shuf -n 5 stephensi_inds.txt > stephensi.distinguished.list
+
+nohup bcftools view --threads 4 -S stephensi_inds.txt -c 1:minor -m2 -M2 -U -v snps -i 'F_MISSING<0.2' -O z -o ./vcf/stephensi.allsites.final.auto.snps.miss02.mac1.vcf.gz /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.auto.snps.vcf.gz > stephensi_extractvcf.log &
+
+# Tigris
+grep "tigris" Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt | cut -f 1 > tigris_inds.txt
+
+# Randomly select 5
+shuf -n 2 tigris_inds.txt > tigris.distinguished.list
+
+nohup bcftools view --threads 4 -S tigris_inds.txt -c 1:minor -m2 -M2 -U -v snps -i 'F_MISSING<0.2' -O z -o ./vcf/tigris.allsites.final.auto.snps.miss02.mac1.vcf.gz /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.auto.snps.vcf.gz > tigris_extractvcf.log &
+
+# Mitchellii
+grep "mitchellii" Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt | cut -f 1 > mitchellii_inds.txt
+
+# Randomly select 5
+shuf -n 5 mitchellii_inds.txt > mitchellii.distinguished.list
+
+nohup bcftools view --threads 4 -S mitchellii_inds.txt -c 1:minor -m2 -M2 -U -v snps -i 'F_MISSING<0.2' -O z -o ./vcf/mitchellii.allsites.final.auto.snps.miss02.mac1.vcf.gz /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.auto.snps.vcf.gz > mitchellii_extractvcf.log &
+
+# Viridis
+grep "viridis" Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt | cut -f 1 > viridis_inds.txt
+
+# Randomly select 5
+shuf -n 5 viridis_inds.txt > viridis.distinguished.list
+
+nohup bcftools view --threads 4 -S viridis_inds.txt -c 1:minor -m2 -M2 -U -v snps -i 'F_MISSING<0.2' -O z -o ./vcf/viridis.allsites.final.auto.snps.miss02.mac1.vcf.gz /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.auto.snps.vcf.gz > viridis_extractvcf.log &
+
+# Lutosus
+grep "lutosus" Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt | cut -f 1 > lutosus_inds.txt
+
+# Randomly select 5
+shuf -n 5 lutosus_inds.txt > lutosus.distinguished.list
+
+nohup bcftools view --threads 4 -S lutosus_inds.txt -c 1:minor -m2 -M2 -U -v snps -i 'F_MISSING<0.2' -O z -o ./vcf/lutosus.allsites.final.auto.snps.miss02.mac1.vcf.gz /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.auto.snps.vcf.gz > lutosus_extractvcf.log &
+
+# Concolor
+grep "concolor" Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt | cut -f 1 > concolor_inds.txt
+
+# Randomly select 5
+shuf -n 5 concolor_inds.txt > concolor.distinguished.list
+
+nohup bcftools view --threads 4 -S concolor_inds.txt -c 1:minor -m2 -M2 -U -v snps -i 'F_MISSING<0.2' -O z -o ./vcf/concolor.allsites.final.auto.snps.miss02.mac1.vcf.gz /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.auto.snps.vcf.gz > concolor_extractvcf.log &
+
+# Oreganus
+grep "oreganus" Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt | cut -f 1 > oreganus_inds.txt
+
+# Randomly select 5
+shuf -n 5 oreganus_inds.txt > oreganus.distinguished.list
+
+nohup bcftools view --threads 4 -S oreganus_inds.txt -c 1:minor -m2 -M2 -U -v snps -i 'F_MISSING<0.2' -O z -o ./vcf/oreganus.allsites.final.auto.snps.miss02.mac1.vcf.gz /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.auto.snps.vcf.gz > oreganus_extractvcf.log &
+
+# Helleri
+grep "helleri" Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt | cut -f 1 > helleri_inds.txt
+
+# Randomly select 5
+shuf -n 5 helleri_inds.txt > helleri.distinguished.list
+
+nohup bcftools view --threads 4 -S helleri_inds.txt -c 1:minor -m2 -M2 -U -v snps -i 'F_MISSING<0.2' -O z -o ./vcf/helleri.allsites.final.auto.snps.miss02.mac1.vcf.gz /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.auto.snps.vcf.gz > oreganus_extractvcf.log &
+
+```
+
+Index all of the vcfs.
+
+```
+for vcf in ./vcf/*.vcf.gz; do tabix -C -p vcf $vcf; done
+```
+
+Split all of the vcfs by chromosome.
+
+```
+cp ../xp-ehh/shapeit2/chromlist.nounplaced.txt ./
+
+# pyrrhus 
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S pyrrhus_inds.txt -O z -o ./vcf/pyrrhus.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/pyrrhus.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_pyrrhus_vcf.log & 
+
+# stephensi
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S stephensi_inds.txt -O z -o ./vcf/stephensi.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/stephensi.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_stephensi_vcf.log & 
+
+# tigris
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S tigris_inds.txt -O z -o ./vcf/tigris.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/tigris.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_tigris_vcf.log & 
+
+# mitchellii
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S mitchellii_inds.txt -O z -o ./vcf/mitchellii.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/mitchellii.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_mitchellii_vcf.log & 
+
+# viridis
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S viridis_inds.txt -O z -o ./vcf/viridis.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/viridis.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_viridis_vcf.log &
+
+# lutosus
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S lutosus_inds.txt -O z -o ./vcf/lutosus.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/lutosus.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_lutosus_vcf.log &
+
+# concolor
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S concolor_inds.txt -O z -o ./vcf/concolor.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/concolor.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_concolor_vcf.log &
+
+# oreganus
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S oreganus_inds.txt -O z -o ./vcf/oreganus.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/oreganus.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_oreganus_vcf.log &
+
+# helleri
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S helleri_inds.txt -O z -o ./vcf/helleri.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/helleri.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_helleri_vcf.log &
+
+for vcf in ./vcf/*.vcf.gz; do tabix -C -p vcf $vcf; done
+```
+
+Convert to smc format. 
+
+```
+# An easy way to make the pop list is to 
+for i in `cat viridis_inds.txt`; do echo -n $i; echo -n ","; done
+
+# pyrrhus
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat pyrrhus.distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc --cores 4 -c 50000 ./vcf/pyrrhus.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/pyrrhus.$chrom.$indv.smc.gz $chrom Pop1:SR0016,SR0017,SR0018,SR0021,SR0022,SR0023,SR0024,SR0025,SR0026,SR0027,SR0028,SR0029,SR0030,SR0031,SR0078,SR0086,SR0088 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > pyrrhus_vcf2smc.log &
+
+# stephensi
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat stephensi.distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc --cores 4 -c 50000 ./vcf/stephensi.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/stephensi.$chrom.$indv.smc.gz $chrom Pop1:SR0002,SR0003,SR0004,SR0005,SR0006,SR0007,SR0008,SR0009,SR0010,SR0011,SR0012,SR0013,SR0014,SR0015,SR0019,SR0020 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > stephensi_vcf2smc.log &
+
+# tigris
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat tigris.distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc --cores 4 -c 50000 ./vcf/tigris.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/tigris.$chrom.$indv.smc.gz $chrom Pop1:CT10189615,TR0001,TR0002,TR0003,TR0004 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > tigris_vcf2smc.log &
+
+# mitchellii
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat mitchellii.distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc --cores 4 -c 50000 ./vcf/mitchellii.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/mitchellii.$chrom.$indv.smc.gz $chrom Pop1:SR0041,SR0042,SR0043,SR0045,SR0046,SR0047,SR0048,SR0050,SR0051,SR0052,SR0056 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > mitchellii_vcf2smc.log &
+
+# viridis
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat viridis.distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc --cores 4 -c 50000 ./vcf/viridis.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/viridis.$chrom.$indv.smc.gz $chrom Pop1:CV0004,CV0006,CV0008,CV0009,CV0010,CV0011,CV0634,CV0636,CV0696,CV0697,CV0853,CV0854,CV0856,CV0857,CV0858,CV0859,CV0860,CV0862,CV0863,CV0864,CV0865,CV0866,CV0867,CV0868,CV0869,CV0870,CV0945,CV0946,CV0947,CV0948,CV0949,CV0950,CV0951,CV1037,CV1038 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > viridis_vcf2smc.log &
+
+# lutosus
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat lutosus.distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc --cores 4 -c 50000 ./vcf/lutosus.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/lutosus.$chrom.$indv.smc.gz $chrom Pop1:CV0808,CV0809,CV0810,CV0811,CV0812,CV0813,CV0814,CV0815,CV0816,CV0817,CV0818,CV0819,CV0979,CV0980,CV0981,CV0982,CV0983,CV0984,CV0988 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > lutosus_vcf2smc.log &
+
+# concolor
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat concolor.distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc --cores 8 -c 50000 ./vcf/concolor.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/concolor.$chrom.$indv.smc.gz $chrom Pop1:CV0985,CV0986,CV0989,CV0990,CV0991,CV1148,CV1149,CV1150,CV1151,CV1152,CV1153,CV1154,CV1227,CV1229 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > concolor_vcf2smc.log &
+
+# oreganus
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat oreganus.distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc --cores 4 -c 50000 ./vcf/oreganus.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/oreganus.$chrom.$indv.smc.gz $chrom Pop1:CV0083,CV0089,CV0092,CV0101,CV0141,CV0144,CV0147,CV0150,CV0764,CV0766,CV0770,CV0772,CV0775,CV0780,CV0781,CV0783,CV0784,CV0786,CV0787,CV0790,CV0793,CV0796,CV0798,CV0800 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > oreganus_vcf2smc.log &
+
+# helleri
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat helleri.distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc --cores 4 -c 50000 ./vcf/helleri.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/helleri.$chrom.$indv.smc.gz $chrom Pop1:CV0047,CV0053,CV0054,CV0085,CV0086,CV0087,CV0093,CV0094,CV0095,CV0096,CV0098,CV0105,CV0111,CV0135,CV0136,CV0137,CV0145,CV0148,CV0151,CV0152,CV0153,CV0155,CV0157,CV0158,CV0159,CV0160,CV0161,CV0162 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > helleri_vcf2smc.log &
+
+```
+
+Run smc++
+
+```
+# pyrrhus 
+cd  analysis
+
+mkdir pyrrhus 
+
+cd ../
+
+sudo nohup docker run --rm -v $PWD:/mnt terhorst/smcpp:latest estimate --timepoints 1000 200000 --cores 4 -o analysis/pyrrhus  2.4e-9 out/pyrrhus.*.smc.gz > pyrrhus.estimate.log &
+
+# tigris
+cd  analysis
+
+mkdir tigris 
+
+cd ../
+
+sudo nohup docker run --rm -v $PWD:/mnt terhorst/smcpp:latest estimate --timepoints 1000 200000 --cores 4 -o analysis/tigris  2.4e-9 out/tigris.*.smc.gz > tigris.estimate.log &
+
+# stephensi
+cd  analysis
+
+mkdir stephensi 
+
+cd ../
+
+sudo nohup docker run --rm -v $PWD:/mnt terhorst/smcpp:latest estimate --timepoints 1000 200000 --cores 4 -o analysis/stephensi  2.4e-9 out/stephensi.*.smc.gz > stephensi.estimate.log &
+
+# mitchellii
+cd  analysis
+
+mkdir mitchellii 
+
+cd ../
+
+sudo nohup docker run --rm -v $PWD:/mnt terhorst/smcpp:latest estimate --timepoints 1000 200000 --cores 4 -o analysis/mitchellii  2.4e-9 out/mitchellii.*.smc.gz > mitchellii.estimate.log &
+
+# viridis
+cd  analysis
+
+mkdir viridis 
+
+cd ../
+
+sudo nohup docker run --rm -v $PWD:/mnt terhorst/smcpp:latest estimate --timepoints 1000 200000 --cores 4 -o analysis/viridis  2.4e-9 out/viridis.*.smc.gz > viridis.estimate.log &
+
+# lutosus
+cd  analysis
+
+mkdir lutosus 
+
+cd ../
+
+sudo nohup docker run --rm -v $PWD:/mnt terhorst/smcpp:latest estimate --timepoints 1000 200000 --cores 4 -o analysis/lutosus  2.4e-9 out/lutosus.*.smc.gz > lutosus.estimate.log &
+
+# concolor
+cd  analysis
+
+mkdir concolor
+
+cd ../
+
+sudo nohup docker run --rm -v $PWD:/mnt terhorst/smcpp:latest estimate --timepoints 1000 200000 --cores 4 -o analysis/concolor 2.4e-9 out/concolor.*.smc.gz > concolor.estimate.log &
+
+# oreganus 
+cd  analysis
+
+mkdir oreganus
+
+cd ../
+
+sudo nohup docker run --rm -v $PWD:/mnt terhorst/smcpp:latest estimate --timepoints 1000 200000 --cores 4 -o analysis/oreganus 2.4e-9 out/oreganus.*.smc.gz > oreganus.estimate.log &
+
+# helleri
+cd  analysis
+
+mkdir helleri
+
+cd ../
+
+sudo nohup docker run --rm -v $PWD:/mnt terhorst/smcpp:latest estimate --timepoints 1000 200000 --cores 4 -o analysis/helleri 2.4e-9 out/helleri.*.smc.gz > helleri.estimate.log &
+
+```
+
+Plot and convert to a csv.
+
+```
+# pyrrhus
+sudo docker run --rm -v $PWD:/mnt terhorst/smcpp:latest plot pyrrhus-SMC.pdf analysis/pyrrhus/model.final.json -g 3.3 -c
+
+# tigris
+sudo docker run --rm -v $PWD:/mnt terhorst/smcpp:latest plot tigris-SMC.pdf analysis/tigris/model.final.json -g 3.3 -c
+
+# stephensi
+sudo docker run --rm -v $PWD:/mnt terhorst/smcpp:latest plot stephensi-SMC.pdf analysis/stephensi/model.final.json -g 3.3 -c
+
+# mitchellii
+sudo docker run --rm -v $PWD:/mnt terhorst/smcpp:latest plot mitchellii-SMC.pdf analysis/mitchellii/model.final.json -g 3.3 -c
+
+# viridis
+sudo docker run --rm -v $PWD:/mnt terhorst/smcpp:latest plot viridis-SMC.pdf analysis/viridis/model.final.json -g 3.3 -c
+
+# lutosus
+sudo docker run --rm -v $PWD:/mnt terhorst/smcpp:latest plot lutosus-SMC.pdf analysis/lutosus/model.final.json -g 3.3 -c
+
+# concolor 
+
+sudo docker run --rm -v $PWD:/mnt terhorst/smcpp:latest plot concolor-SMC.pdf analysis/concolor/model.final.json -g 3.3 -c
+
+# oreganus
+sudo docker run --rm -v $PWD:/mnt terhorst/smcpp:latest plot oreganus-SMC.pdf analysis/oreganus/model.final.json -g 3.3 -c
+
+# helleri 
+sudo docker run --rm -v $PWD:/mnt terhorst/smcpp:latest plot helleri-SMC.pdf analysis/helleri/model.final.json -g 3.3 -c
+```
+
+
+
 ------------------------------------------------------------------------------------------
 ## Recombination rate and recombination hotspot identification
 
