@@ -791,24 +791,45 @@ bcftools concat -O z -o /media/queen/TombBucket/crotalus_genomic_landscape/vcf/c
 
 We estimated the phylogeny of the Speckled and Western Rattlesnake species complexes using multiple approaches that are listed below, the pipeline to perform this set of analyses is called `phylogeny_structure.md`.
 
+*Software for Phylogeny, population structure, and demography*:
+
 - Concatenated maximum likelihood with [RAxML](https://github.com/amkozlov/raxml-ng)
 - Coalescent species tree inference with [SVDquartets](https://www.asc.ohio-state.edu/kubatko.2/software/SVDquartets/)
 - Phylogenetic network analysis with [SplitsTree](https://uni-tuebingen.de/en/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/informatik/lehrstuehle/algorithms-in-bioinformatics/software/splitstree/)
 - Estimated divergence times with [treePL](https://github.com/blackrim/treePL)
+- Inferred changes in effective population size with [smc++](https://github.com/popgenmethods/smcpp)
 - Inferred genetic structure using principal component analysis using [SNPrelate](https://www.bioconductor.org/packages/release/bioc/html/SNPRelate.html)
 - Inferred genetic structure using model-based ancestry using [ADMIXTURE](https://dalexander.github.io/admixture/)
+- Processed and visualized results with [R](https://www.r-project.org/)
 
-### Recombination rate and recombination hotspot identification
+## Recombination rate and recombination hotspot identification
 
-### Calculation of introgression and divergence statistics
+We estimated recombination maps for *C. pyrrhus*, *C. stephensi*, *C. viridis*, *C. concolor*, and *C. helleri*. We then followed previous approaches developed by [Schield et al. (2020)](https://academic.oup.com/mbe/article/37/5/1272/5700722) and [Hoge et al. (2024)](https://www.science.org/doi/10.1126/science.adj7026) to identify recombination hotspots and coldspots.
 
-### Distinguishing introgression from incomplete lineage sorting
+*Software for Recombination rate and recombination hotspot identification*:
 
-### Evolutionary and ecological divergence
+- Inferred changes in effective population size with [smc++](https://github.com/popgenmethods/smcpp)
+- Estimated recombination maps with [pyrho](https://github.com/popgenmethods/pyrho)
+- Calculate mean recombination rate in sliding windows with [bedtools](https://bedtools.readthedocs.io/en/latest/)
+- Processed and visualized results with [R](https://www.r-project.org/)
 
-### Relationships between introgression, recombination, and divergent selection
+## Calculation of introgression and divergence statistics
 
-### Identification of species barriers and fine-scale variation in introgression
+We estimated the admixture proportion (fd statistic; [Martin et al. (2015)](https://academic.oup.com/mbe/article/32/1/244/2925550?guestAccessKey=) to examine genome-wide patters of introgression. We also estimated absolute (dxy) and relative divergence (Fst) using [pixy](https://pixy.readthedocs.io/en/latest/).
+
+*Software for Calculation of introgression and divergence statistics*:
+
+- Estimated fd with [ABBABABAwindows.py]([https://bedtools.readthedocs.io/en/latest/](https://github.com/simonhmartin/genomics_general))
+- Estimated divergence measures with [pixy](https://pixy.readthedocs.io/en/latest/)
+- Processed and visualized results with [R](https://www.r-project.org/)
+
+## Distinguishing introgression from incomplete lineage sorting
+
+## Evolutionary and ecological divergence
+
+## Relationships between introgression, recombination, and divergent selection
+
+## Identification of species barriers and fine-scale variation in introgression
 
 
 
