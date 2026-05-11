@@ -51,6 +51,9 @@ We sequenced newly generated libraries on Illumina NovaSeq 6000 lanes to generat
 - [bedtools](https://bedtools.readthedocs.io/en/latest/)
 - [picard](https://github.com/broadinstitute/picard)
 
+
+------------------------------------------------------------------------------------------
+
 #### Workflow for analysis of the genomic landscape of introgression within Crotalus - Part 1 - Processing, mapping, and variant calling
 
 Author: Keaka Farleigh, edited from Drew Schield's workflow
@@ -802,6 +805,9 @@ We estimated the phylogeny of the Speckled and Western Rattlesnake species compl
 - Inferred genetic structure using model-based ancestry using [ADMIXTURE](https://dalexander.github.io/admixture/)
 - Processed and visualized results with [R](https://www.r-project.org/)
 
+
+------------------------------------------------------------------------------------------
+
 ## Recombination rate and recombination hotspot identification
 
 We estimated recombination maps for *C. pyrrhus*, *C. stephensi*, *C. viridis*, *C. concolor*, and *C. helleri*. We then followed previous approaches developed by [Schield et al. (2020)](https://academic.oup.com/mbe/article/37/5/1272/5700722) and [Hoge et al. (2024)](https://www.science.org/doi/10.1126/science.adj7026) to identify recombination hotspots and coldspots.
@@ -813,6 +819,9 @@ We estimated recombination maps for *C. pyrrhus*, *C. stephensi*, *C. viridis*, 
 - Calculate mean recombination rate in sliding windows with [bedtools](https://bedtools.readthedocs.io/en/latest/)
 - Processed and visualized results with [R](https://www.r-project.org/)
 
+
+------------------------------------------------------------------------------------------
+
 ## Calculation of introgression and divergence statistics
 
 We estimated the admixture proportion (fd statistic; [Martin et al. (2015)](https://academic.oup.com/mbe/article/32/1/244/2925550?guestAccessKey=) to examine genome-wide patters of introgression. We also estimated absolute (dxy) and relative divergence (Fst) using [pixy](https://pixy.readthedocs.io/en/latest/).
@@ -822,6 +831,10 @@ We estimated the admixture proportion (fd statistic; [Martin et al. (2015)](http
 - Estimated fd with [ABBABABAwindows.py](https://github.com/simonhmartin/genomics_general)
 - Estimated divergence measures with [pixy](https://pixy.readthedocs.io/en/latest/)
 - Processed and visualized results with [R](https://www.r-project.org/)
+
+
+------------------------------------------------------------------------------------------
+
 
 ## Distinguishing introgression from incomplete lineage sorting
 
@@ -833,6 +846,9 @@ We tested whether our observed patterns may have been produced by incomplete lin
 - Estimated divergence measures with [pixy](https://pixy.readthedocs.io/en/latest/)
 - Processed and visualized results with [R](https://www.r-project.org/)
 
+  
+------------------------------------------------------------------------------------------
+
 ## Evolutionary and ecological divergence
 
 We calculated the evolutionary and ecological divergence to test the relationship between introgression and types of divergence.
@@ -842,6 +858,9 @@ We calculated the evolutionary and ecological divergence to test the relationshi
 - Estimating evolutionary divergence (branch lengths) with [RAxML](https://github.com/amkozlov/raxml-ng)
 - Estimating ecological divergence, processing, and visualizing results with [R](https://www.r-project.org/)
 
+  
+------------------------------------------------------------------------------------------
+
 ## Relationships between introgression, recombination, and divergent selection
 
 We tested the relationship between introgression, recombination rate, exon density, and relative differentiation (Fst). We used the output from previous steps (see above) in these tests.
@@ -850,6 +869,9 @@ We tested the relationship between introgression, recombination rate, exon densi
 
 - We tested these relationships in [R](https://www.r-project.org/)
 
+  
+------------------------------------------------------------------------------------------
+
 ## Identification of species barriers and fine-scale variation in introgression
 
 We identified outlier barrier windows and tested for differential signals of introgression in various genomic regions (e.g., venom, barrier windows) using fd statistics.
@@ -857,4 +879,7 @@ We identified outlier barrier windows and tested for differential signals of int
 *Software for Identification of species barriers and fine-scale variation in introgression*:
 
 - We tested these relationships in [R](https://www.r-project.org/)
+
+  
+------------------------------------------------------------------------------------------
 
