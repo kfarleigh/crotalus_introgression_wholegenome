@@ -1,6 +1,6 @@
 # crotalus_introgression_wholegenome
 
-*Last updated May 8th, 2026*
+*Last updated May 11th, 2026*
 
 **WARNING, LINKS MAY NOT WORK UNTIL AFTER THE MANUSCRIPT HAS BEEN PUBLISHED.**
 
@@ -8,14 +8,23 @@ I am in the process of uploading scripts to this repository to ensure that they 
 
 This repository contains the computational workflow and scripts for [Farleigh et al., (*in press at PNAS*)](). Please email Keaka Farleigh (keakafarleigh@virginia.edu; keakafarleigh@gmail.com) if you have any questions. 
 
+------------------------------------------------------------------------------------------
 ## Citation
+
 
 Farleigh, K., D.K. Highland, M.G. Alderman, Y.Z. Francioli, S.R. Hirst, E.M. Faber, B.W. Perry, M.L. Holding, G. Castañeda-Gaytán, M. Borja, H. Franz-Chávez, C.L. Parkinson, J.L. Strickland, M.J. Margres, S.P. Mackessy, J.M. Meik, T.A. Castoe, and D. R. Schield. Evolution of genome-wide barriers to gene flow during complex speciation in rattlesnakes. *In press at PNAS*.
 
+
+
+------------------------------------------------------------------------------------------
 ## Genomic data
+
 
 The genomic data for this project are deposited as parts of BioProjects [PRJNA1454467](), [PRJNA593834](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA593834), and [PRJNA1150930](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA1150930). The genome for this project is deposited at [PRJNA1460337]().
 
+
+
+------------------------------------------------------------------------------------------
 ## Structure of this repository.
 
 This repository contains the computational workflow for [Farleigh et al., (*in press at PNAS*)](). This ReadMe will contain the entire computational workflow for the project and serve as a sort of one-stop shop. It will also tell you which scripts are associated with each analysis so that you can download pipelines for specific analyses if you wish. I have separated this ReadMe into each of the method sections listed in the [supplemental information](). Each section begins with a general description of the methods and software that are relevant before moving into the workflow. Each script referenced herein is located in the `scripts/` directory.
@@ -31,10 +40,16 @@ You can jump to any of the relevant sections by clicking on the links below:
 - [Relationships between introgression, recombination, and divergent selection](https://github.com/kfarleigh/crotalus_introgression_wholegenome/tree/main#relationships-between-introgression-recombination-and-divergent-selection)
 - [Identification of species barriers and fine-scale variation in introgression](https://github.com/kfarleigh/crotalus_introgression_wholegenome/tree/main#identification-of-species-barriers-and-fine-scale-variation-in-introgression)
 
+
+
+------------------------------------------------------------------------------------------
 ### Genome assembly and annotation
 
 We assigned chromosome names using a synteny-based approach as implemented in [mashmap](https://github.com/marbl/MashMap). The script to perform this is called `chromosome_assignment.md`.
 
+
+
+------------------------------------------------------------------------------------------
 ### Whole genome sequencing and variant calling
 
 We sequenced newly generated libraries on Illumina NovaSeq 6000 lanes to generate 150 bp paired-end reads. We then trimmed our sequence data with [Trimmomatic](https://github.com/usadellab/trimmomatic). We then followed [GATK's best practices workflow](https://gatk.broadinstitute.org/hc/en-us/sections/360007226651-Best-Practices-Workflows) to call and filter SNPs. The pipeline to perform this set of analyses is called `variant_calling.md`.
@@ -64,7 +79,6 @@ Email: keakafarleigh@virginia.edu
 
 In this part of the workflow, we'll quality trim raw reads, perform mapping to the reference genome, and call variants.
 
-------------------------------------------------------------------------------------------
 ##### Set up environment
 
 We'll process the data using the directories on the `extradrive1` drive:
@@ -130,7 +144,6 @@ for i in `ls *R2*.fastq.gz`; do mv $i `echo $i | cut -d_ -f1`_R2_.fastq.gz; done
 
 Now, we can move on to quality trimming.
 
-------------------------------------------------------------------------------------------
 ##### 1. Quality trimming using Trimmomatic
 
 ###### 1. Format sample list
@@ -211,8 +224,6 @@ rm /media/queen/extradrive1/crotalus_genomic_landscape/fastq_filtered/Undetermin
 for i in `ls *_1_P.trim.fq.gz `; do mv $i `echo $i | cut -d_ -f1`_1_P.trim.fq.gz; done
 for i in `ls *_2_P.trim.fq.gz `; do mv $i `echo $i | cut -d_ -f1`_2_P.trim.fq.gz; done
 ```
-
-------------------------------------------------------------------------------------------
 ##### 2. Mapping to reference genome
 
 We'll map the trimmed reads to the chromosome-assigned reference genome `/media/queen/extradrive1/crotalus_pyrrhus_genome/bwa_index/Crotalus_pyrrhus.hap1.final.fasta`.
@@ -236,8 +247,6 @@ cat listTrimmomatic_UO.txt | cut -d_ -f1 > listBWA_UO.txt
  
 parallel --progress --joblog ./log/logfile.bwa -j 10 --workdir . ./runBWA_UO_parallel.sh :::: listBWA_UO.txt > runBWA_UO_lane1.log
 ```
-
-------------------------------------------------------------------------------------------
 ##### 3. Variant calling
 
 We'll call genomic variants using `gatk`, starting with individual variant calls using `HaplotypeCaller`, followed by cohort variant calls using `GenotypeGVCFs`.
@@ -416,9 +425,6 @@ zgrep -v "^#" crotalus_genus.allsites.raw.chr1_scaffold_3_3contigs.vcf.gz | wc -
 cd ../
 
 ```
-
-
-------------------------------------------------------------------------------------------
 ##### 4. Sex identification
 
 We'll use relative read depths on the Z chromosome and autosomes to infer genetic sex of each individual.
@@ -532,7 +538,6 @@ nohup sh runSexIdentification.sh mosdepth_samplelist_batch1.txt > runSexIdentifi
 for indv in `cat mosdepth_samplelist_batch1.txt`; do mean=`awk '{ sum += $4; n++ } END { if (n > 0) print sum / n; }' ./mosdepth_results/$indv.chr4.regions.bed`; echo $indv $mean; done
 ```
 
-------------------------------------------------------------------------------------------
 ##### 5. Variant filtering
 
 In this section we'll impose various filtering steps to produce high-quality SNPs for downstream analysis.
@@ -790,6 +795,7 @@ bcftools concat -O z -o /media/queen/TombBucket/crotalus_genomic_landscape/vcf/c
 
 ```
 
+------------------------------------------------------------------------------------------
 ## Phylogeny, population structure, and demography
 
 We estimated the phylogeny of the Speckled and Western Rattlesnake species complexes using multiple approaches that are listed below, the pipeline to perform this set of analyses is called `phylogeny_structure.md`.
@@ -806,8 +812,9 @@ We estimated the phylogeny of the Speckled and Western Rattlesnake species compl
 - Processed and visualized results with [R](https://www.r-project.org/)
 
 
-------------------------------------------------------------------------------------------
 
+
+------------------------------------------------------------------------------------------
 ## Recombination rate and recombination hotspot identification
 
 We estimated recombination maps for *C. pyrrhus*, *C. stephensi*, *C. viridis*, *C. concolor*, and *C. helleri*. We then followed previous approaches developed by [Schield et al. (2020)](https://academic.oup.com/mbe/article/37/5/1272/5700722) and [Hoge et al. (2024)](https://www.science.org/doi/10.1126/science.adj7026) to identify recombination hotspots and coldspots.
@@ -820,8 +827,9 @@ We estimated recombination maps for *C. pyrrhus*, *C. stephensi*, *C. viridis*, 
 - Processed and visualized results with [R](https://www.r-project.org/)
 
 
-------------------------------------------------------------------------------------------
 
+
+------------------------------------------------------------------------------------------
 ## Calculation of introgression and divergence statistics
 
 We estimated the admixture proportion (fd statistic; [Martin et al. (2015)](https://academic.oup.com/mbe/article/32/1/244/2925550?guestAccessKey=) to examine genome-wide patters of introgression. We also estimated absolute (dxy) and relative divergence (Fst) using [pixy](https://pixy.readthedocs.io/en/latest/).
@@ -833,9 +841,9 @@ We estimated the admixture proportion (fd statistic; [Martin et al. (2015)](http
 - Processed and visualized results with [R](https://www.r-project.org/)
 
 
+
+
 ------------------------------------------------------------------------------------------
-
-
 ## Distinguishing introgression from incomplete lineage sorting
 
 We tested whether our observed patterns may have been produced by incomplete lineage sorting, rather than introgression, using analyses of linkage disequilibrium and absolute sequence divergence (dxy). 
@@ -847,9 +855,11 @@ We tested whether our observed patterns may have been produced by incomplete lin
 - Processed and visualized results with [R](https://www.r-project.org/)
 
   
-------------------------------------------------------------------------------------------
 
+
+------------------------------------------------------------------------------------------
 ## Evolutionary and ecological divergence
+
 
 We calculated the evolutionary and ecological divergence to test the relationship between introgression and types of divergence.
 
@@ -859,9 +869,11 @@ We calculated the evolutionary and ecological divergence to test the relationshi
 - Estimating ecological divergence, processing, and visualizing results with [R](https://www.r-project.org/)
 
   
-------------------------------------------------------------------------------------------
 
+
+------------------------------------------------------------------------------------------
 ## Relationships between introgression, recombination, and divergent selection
+
 
 We tested the relationship between introgression, recombination rate, exon density, and relative differentiation (Fst). We used the output from previous steps (see above) in these tests.
 
@@ -870,8 +882,9 @@ We tested the relationship between introgression, recombination rate, exon densi
 - We tested these relationships in [R](https://www.r-project.org/)
 
   
-------------------------------------------------------------------------------------------
 
+
+------------------------------------------------------------------------------------------
 ## Identification of species barriers and fine-scale variation in introgression
 
 We identified outlier barrier windows and tested for differential signals of introgression in various genomic regions (e.g., venom, barrier windows) using fd statistics.
