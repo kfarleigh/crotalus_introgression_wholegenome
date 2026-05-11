@@ -20,6 +20,17 @@ The genomic data for this project are deposited as parts of BioProjects [PRJNA14
 
 This repository contains the computational workflow for [Farleigh et al., (*accepted*)](). This ReadMe will contain the entire computational workflow for the project and serve as a sort of one-stop shop. It will also tell you which scripts are associated with each analysis so that you can download pipelines for specific analyses if you wish. I have separated this ReadMe into each of the method sections listed in the [supplemental information](). Each section begins with a general description of the methods and software that are relevant before moving into the workflow. Each script referenced herein is located in the `scripts/` directory.
 
+You can jump to any of the relevant sections by clicking on the links below:
+- [Genome assembly and annotation](https://github.com/kfarleigh/crotalus_introgression_wholegenome/tree/main#genome-assembly-and-annotation)
+- [Whole genome sequencing and variant calling](https://github.com/kfarleigh/crotalus_introgression_wholegenome/tree/main#whole-genome-sequencing-and-variant-calling)
+- [Phylogeny, population structure, and demography](https://github.com/kfarleigh/crotalus_introgression_wholegenome/tree/main#phylogeny-population-structure-and-demography)
+- [Recombination rate and recombination hotspot identification](https://github.com/kfarleigh/crotalus_introgression_wholegenome/tree/main#recombination-rate-and-recombination-hotspot-identification)
+- [Calculation of introgression and divergence statistics](https://github.com/kfarleigh/crotalus_introgression_wholegenome/tree/main#calculation-of-introgression-and-divergence-statistics)
+- [Distinguishing introgression from incomplete lineage sorting](https://github.com/kfarleigh/crotalus_introgression_wholegenome/tree/main#distinguishing-introgression-from-incomplete-lineage-sorting)
+- [Evolutionary and ecological divergence](https://github.com/kfarleigh/crotalus_introgression_wholegenome/tree/main#evolutionary-and-ecological-divergence)
+- [Relationships between introgression, recombination, and divergent selection](https://github.com/kfarleigh/crotalus_introgression_wholegenome/tree/main#relationships-between-introgression-recombination-and-divergent-selection)
+- [Identification of species barriers and fine-scale variation in introgression](https://github.com/kfarleigh/crotalus_introgression_wholegenome/tree/main#identification-of-species-barriers-and-fine-scale-variation-in-introgression)
+
 ### Genome assembly and annotation
 
 We assigned chromosome names using a synteny-based approach as implemented in [mashmap](https://github.com/marbl/MashMap). The script to perform this is called `chromosome_assignment.md`.
