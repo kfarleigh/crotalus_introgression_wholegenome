@@ -819,7 +819,7 @@ We estimated the admixture proportion (fd statistic; [Martin et al. (2015)](http
 
 *Software for Calculation of introgression and divergence statistics*:
 
-- Estimated fd with [ABBABABAwindows.py]([https://bedtools.readthedocs.io/en/latest/](https://github.com/simonhmartin/genomics_general))
+- Estimated fd with [ABBABABAwindows.py](https://github.com/simonhmartin/genomics_general)
 - Estimated divergence measures with [pixy](https://pixy.readthedocs.io/en/latest/)
 - Processed and visualized results with [R](https://www.r-project.org/)
 
