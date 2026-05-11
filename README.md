@@ -2396,6 +2396,533 @@ We estimated recombination maps for *C. pyrrhus*, *C. stephensi*, *C. viridis*, 
 - Processed and visualized results with [R](https://www.r-project.org/)
 
 
+##### smc++ locality
+
+We will use a single representative population for each species to avoid any issues with population substructure. We will only use data from the autosomes as well. 
+
+```
+# White tank pyrrhus, these are individuals SR0025-29 and are listed in whitetank_pyrrhus_inds.txt
+shuf -n 2 whitetank_pyrrhus_inds.txt > whitetank.pyrrhus.distinguished.list
+
+
+### Viridis (Weld county)
+# This includes individuals CV0004, CV0006, CV0008-11
+# These individuals are listed in viridis_inds.txt 
+
+# Randomly select 2
+shuf -n 2 viridis_inds.txt > viridis.distinguished.list
+
+### Stephensi (independence)
+# This includes individuals SR0010-15
+# These individuals are listed in stephensi_inds.txt 
+
+# Randomly select 3
+shuf -n 3 stephensi_inds.txt > stephensi.distinguished.list
+
+### Oreganus (north)
+# This includes individuals CV0764-CV0800
+# These individuals are listed in oreganus_inds.txt
+
+# Randomly select 5
+shuf -n 5 oreganus_inds.txt > oreganus.distinguished.list
+
+### Concolor (west)
+# This includes individuals CV00985-991 and CV1148-1149
+# These individuals are listed in concolor_inds.txt
+
+# Randomly select 3
+shuf -n 3 concolor_inds.txt > concolor.distinguished.list
+
+# White tank pyrrhus 
+nohup bcftools view --threads 4 -S whitetank_pyrrhus_inds.txt -c 1:minor -m 2 -M 2 -i 'F_MISSING<0.2' -O z -o ./vcf/whitetank.pyrrhus.allsites.final.auto.snps.miss02.mac1.vcf.gz /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.auto.snps.vcf.gz > whitetank.pyrrhus_extractvcf.log &
+
+tabix -p vcf ./vcf/whitetank.pyrrhus.allsites.final.auto.snps.miss02.mac1.vcf.gz -f
+
+### Viridis
+nohup bcftools view --threads 8 -S viridis_inds.txt -c 1:minor -m 2 -M 2 -U -v snps -i 'F_MISSING<0.2' -O z -o ./vcf/viridis.allsites.final.auto.snps.miss02.mac1.vcf.gz /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.auto.snps.vcf.gz > viridis_extractvcf.log &
+
+tabix -p vcf ./vcf/viridis.allsites.final.auto.snps.miss02.mac1.vcf.gz -f
+
+### Stephensi
+nohup bcftools view --threads 4 -S stephensi_inds.txt -c 1:minor -m 2 -M 2 -U -v snps -i 'F_MISSING<0.2' -O z -o ./vcf/stephensi.allsites.final.auto.snps.miss02.mac1.vcf.gz /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.auto.snps.vcf.gz > stephensi_extractvcf.log &
+
+tabix -p vcf ./vcf/stephensi.allsites.final.auto.snps.miss02.mac1.vcf.gz -f 
+
+### Oreganus
+nohup bcftools view --threads 4 -S oreganus_inds.txt -c 1:minor -m2 -M2 -U -v snps -i 'F_MISSING<0.2' -O z -o ./vcf/oreganus.allsites.final.auto.snps.miss02.mac1.vcf.gz /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.auto.snps.vcf.gz > oreganus_extractvcf.log &
+
+tabix -p vcf ./vcf/oreganus.allsites.final.auto.snps.miss02.mac1.vcf.gz -f 
+
+### Concolor 
+nohup bcftools view --threads 4 -S concolor_inds.txt -c 1:minor -m2 -M2 -U -v snps -i 'F_MISSING<0.2' -O z -o ./vcf/concolor.allsites.final.auto.snps.miss02.mac1.vcf.gz /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.auto.snps.vcf.gz > concolor_extractvcf.log &
+
+tabix -p vcf ./vcf/concolor.allsites.final.auto.snps.miss02.mac1.vcf.gz
+
+```
+
+Next, we will split the vcf by chromosome. We will copy over the list of chromosomes from the `xp-ehh` directory. **Note that we remove the Z from this list manually**.
+
+`nano chromlist.nounplaced.txt`
+
+
+```
+
+cp ../xp-ehh/shapeit2/chromlist.nounplaced.txt ./
+
+
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S continental_pyrrhus_inds.txt -O z -o ./vcf/pyrrhus.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/pyrrhus.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_pyrrhus_vcf.log & 
+
+for vcf in ./vcf/*.vcf.gz; do tabix -C -p vcf $vcf; done
+
+### white tank pyrrhus 
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S whitetank_pyrrhus_inds.txt -O z -o ./vcf/whitetank.pyrrhus.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/whitetank.pyrrhus.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_whitetank_pyrrhus_vcf.log & 
+
+for vcf in ./vcf/*whitetank*.vcf.gz; do tabix -C -p vcf $vcf; done
+
+### viridis
+
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 8 -r $line -S viridis_inds.txt -O z -o ./vcf/viridis.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/viridis.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_viridis_vcf.log & 
+
+for vcf in ./vcf/viridis*.vcf.gz; do tabix -C -p vcf $vcf -f; done
+
+### stephensi
+
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S stephensi_inds.txt -O z -o ./vcf/stephensi.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/stephensi.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_stephensi_vcf.log & 
+
+for vcf in ./vcf/stephensi*.vcf.gz; do tabix -C -p vcf $vcf; done
+
+### oreganus
+
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S oreganus_inds.txt -O z -o ./vcf/oreganus.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/oreganus.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_oreganus_vcf.log & 
+
+for vcf in ./vcf/oreganus*.vcf.gz; do tabix -C -p vcf $vcf; done
+
+### concolor 
+
+nohup bash -c 'cat chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S concolor_inds.txt -O z -o ./vcf/concolor.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ./vcf/concolor.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_concolor_vcf.log & 
+
+for vcf in ./vcf/concolor*.vcf.gz; do tabix -C -p vcf $vcf; done
+
+```
+
+Convert vcfs to smc++ input format. `-c` sets any run of homozygosity greater then 50,000 bp to missing; `-d` can be used to list different individuals and create distinct datasets (see smc++ GitHub for more details).
+
+```
+# An easy way to make the pop list is to 
+for i in `cat viridis_inds.txt`; do echo -n $i; echo -n ","; done
+
+
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc -c 50000 ./vcf/pyrrhus.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/pyrrhus.$chrom.$indv.smc.gz $chrom Pop1:SR0016,SR0017,SR0018,SR0021,SR0022,SR0023,SR0024,SR0025,SR0026,SR0027,SR0028,SR0029,SR0030,SR0031,SR0078,SR0086,SR0088 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > pyrrhus_vcf2smc.log &
+
+### white tank pyrrhus
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat whitetank.pyrrhus.distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc -c 50000 ./vcf/whitetank.pyrrhus.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/whitetank.pyrrhus.$chrom.$indv.smc.gz $chrom Pop1:SR0025,SR0026,SR0027,SR0028,SR0029 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > whitetank.pyrrhus_vcf2smc.log &
+
+### viridis
+
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat viridis.distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc -c 50000 ./vcf/viridis.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/viridis.$chrom.$indv.smc.gz $chrom Pop1:CV0004,CV0006,CV0008,CV0009,CV0010,CV0011 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > viridis_vcf2smc.log &
+
+### stephensi
+
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat stephensi.distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc -c 50000 ./vcf/stephensi.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/stephensi.$chrom.$indv.smc.gz $chrom Pop1:SR0010,SR0011,SR0012,SR0013,SR0014,SR0015 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > stephensi_vcf2smc.log &
+
+
+### oreganus
+
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat oreganus.distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc -c 50000 ./vcf/oreganus.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/oreganus.$chrom.$indv.smc.gz $chrom Pop1:CV0764,CV0766,CV0770,CV0772,CV0775,CV0780,CV0781,CV0783,CV0784,CV0786,CV0787,CV0790,CV0793,CV0796,CV0798,CV0800 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > oreganus_vcf2smc.log &
+
+
+### concolor
+
+sudo nohup bash -c 'while read i; do chrom=`echo "$i"`; for indv in `cat concolor.distinguished.list`; do docker run --rm -v $PWD:/mnt terhorst/smcpp:latest vcf2smc -c 50000 ./vcf/concolor.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz out/concolor.$chrom.$indv.smc.gz $chrom Pop1:CV0985,CV0986,CV0989,CV0990,CV0991,CV1148,CV1149 -d $indv $indv; done; done < ./chromlist.nounplaced.txt' > concolor_vcf2smc.log &
+
+
+```
+
+Fit the model using the `estimate` function. Notice that we use our mutation rate here. The `--timepoints` are in generations. 
+
+```
+# white tank 
+cd analysis
+mkdir white_tank
+cd ../
+
+sudo nohup docker run --rm -v $PWD:/mnt terhorst/smcpp:latest estimate --cores 4 --timepoints 1000 200000 -o analysis/white_tank 2.4e-9 out/whitetank.pyrrhus.*.smc.gz > whitetank.pyrrhus.estimate.log & 
+
+### stephensi
+
+cd  analysis
+
+mkdir stephensi 
+
+cd ../
+
+sudo nohup docker run --rm -v $PWD:/mnt terhorst/smcpp:latest estimate --timepoints 1000 200000 -o analysis/stephensi 2.4e-9 --cores 4 out/stephensi.*.smc.gz > stephensi.estimate.log & 
+
+### oreganus
+
+cd  analysis
+
+mkdir oreganus
+
+cd ../
+
+sudo nohup docker run --rm -v $PWD:/mnt terhorst/smcpp:latest estimate --timepoints 1000 200000 -o analysis/oreganus 2.4e-9 --cores 4 out/oreganus.*.smc.gz > oreganus.estimate.log & 
+
+
+### concolor 
+
+cd  analysis
+
+mkdir concolor
+
+cd ../
+
+sudo nohup docker run --rm -v $PWD:/mnt terhorst/smcpp:latest estimate --timepoints 1000 200000 --cores 4 -o analysis/concolor 2.4e-9 out/concolor.*.smc.gz > concolor.estimate.log & 
+
+
+```
+
+##### pyrho 
+
+Now, we will estimate the recombination rate using pyrho. See the installation instructions above if you need to install pyrho.
+
+We will need vcfs for each chromosome, a mutation rate, a population assignment file, and the demography inferred by smc++. The demography is used to guide our hyperparameter settings. 
+
+First, lets activate pyrho and set up our directory.
+
+```
+
+conda activate pyrho 
+
+cd /media/queen/extradrive1/crotalus_genomic_landscape/analysis
+
+mkdir pyrho 
+
+cd ./pyrho
+
+mkdir out
+
+mkdir analysis
+
+mkdir lookup
+
+mkdir vcf 
+
+```
+
+Split our vcf by chromosome. Then tabix them. 
+
+```
+### white tank pyrrhus
+nohup bash -c 'cat ../smc++/chromlist.nounplaced.txt | while read -r line; do bcftools view -c 1:minor -m 2 -M 2 -i 'F_MISSING<0.2' --threads 4 -r $line -S ../smc++/whitetank_pyrrhus_inds.txt -O z -o ./vcf/whitetank.pyrrhus.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ../smc++/vcf/whitetank.pyrrhus.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_pyrrhus.whitetank_vcf.log & 
+
+bcftools view --threads 16 -S ../smc++/whitetank_pyrrhus_inds.txt -c 1:minor -m 2 -M 2 -i 'F_MISSING<0.2' -O z -o ./vcf/whitetank.pyrrhus.allsites.final.chrZ.snps.miss02.mac1.vcf.gz  /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.chrZ.snps.vcf.gz
+
+for vcf in ./vcf/*.vcf.gz; do tabix -C -p vcf $vcf; done
+
+### Viridis 
+
+nohup bash -c 'cat ../smc++/chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 8 -c 1:minor -m 2 -M 2 -r $line -S ../smc++/viridis_inds.txt -O z -o ./vcf/viridis.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ../smc++/vcf/viridis.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_viridis_vcf.log & 
+
+bcftools view --threads 16 -S ../smc++/viridis_inds.txt -c 1:minor -m 2 -M 2 -i 'F_MISSING<0.2' -O z -o ./vcf/viridis.allsites.final.chrZ.snps.miss02.mac1.vcf.gz  /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.chrZ.snps.vcf.gz
+
+for vcf in ./vcf/viridis*.vcf.gz; do tabix -C -p vcf $vcf -f; done
+
+### stephensi
+
+nohup bash -c 'cat ../smc++/chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -c 1:minor -m 2 -M 2 -r $line -S ../smc++/stephensi_inds.txt -O z -o ./vcf/stephensi.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ../smc++/vcf/stephensi.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_stephensi_vcf.log & 
+
+bcftools view --threads 16 -S ../smc++/stephensi_inds.txt -c 1:minor -m 2 -M 2 -i 'F_MISSING<0.2' -O z -o ./vcf/stephensi.allsites.final.chrZ.snps.miss02.mac1.vcf.gz  /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.chrZ.snps.vcf.gz
+
+for vcf in ./vcf/stephensi*.vcf.gz; do tabix -C -p vcf $vcf -f; done
+
+### oreganus
+nohup bash -c 'cat ../smc++/chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -c 1:minor -m 2 -M 2 -r $line -S ../smc++/oreganus_inds.txt -O z -o ./vcf/oreganus.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ../smc++/vcf/oreganus.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_oreganus_vcf.log & 
+
+bcftools view --threads 16 -S ../smc++/oreganus_inds.txt -c 1:minor -m 2 -M 2 -i 'F_MISSING<0.2' -O z -o ./vcf/oreganus.allsites.final.chrZ.snps.miss02.mac1.vcf.gz  /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.chrZ.snps.vcf.gz
+
+for vcf in ./vcf/oreganus*.vcf.gz; do tabix -C -p vcf $vcf -f; done
+
+### concolor 
+nohup bash -c 'cat ../smc++/chromlist.nounplaced.txt | while read -r line; do bcftools view --threads 4 -r $line -S ../smc++/concolor_inds.txt -O z -o ./vcf/concolor.allsites.final.auto.snps.miss02.mac1.$line.vcf.gz ../smc++/vcf/concolor.allsites.final.auto.snps.miss02.mac1.vcf.gz; done' > split_concolor_vcf.log & 
+
+bcftools view --threads 16 -S ../smc++/concolor_inds.txt -c 1:minor -i 'F_MISSING<0.2' -O z -o ./vcf/concolor.allsites.final.chrZ.snps.miss02.mac1.vcf.gz  /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.noCV13.chrZ.snps.vcf.gz
+
+for vcf in ./vcf/concolor*.vcf.gz; do tabix -C -p vcf $vcf -f; done
+```
+
+Generate lookup tables. `-n` and `-N` are sample size, `-n` is the number of haplotypes and `-N` is recommended to be 25%-50% larger then `-n`. 
+
+```
+
+# white tank, 5 individuals 
+
+pyrho make_table -n 10 -N 13 -m 2.4e-9 --logfile . --outfile ./lookup/whitetank.pyrrhus_n_10_N_13.lookuptable.hdf --approx --smcpp_file ../smc++/white.tank.pyrrhus-SMC.csv
+
+
+# viridis, 6 individuals
+
+pyrho make_table -n 12 -N 15 -m 2.4e-9 --logfile . --outfile ./lookup/viridis_n_12_N_15.lookuptable.hdf --approx --smcpp_file ../smc++/viridis-SMC.csv
+
+
+### stephensi, 6 individuals 
+
+pyrho make_table -n 12 -N 15 -m 2.4e-9 --logfile . --outfile ./lookup/stephensi_n_12_N_15.lookuptable.hdf --approx --smcpp_file ../smc++/stephensi-SMC.csv
+
+### oreganus, 16 individuals
+
+pyrho make_table -n 32 -N 40 -m 2.4e-9 --logfile . --outfile ./lookup/oreganus_n_32_N_40.lookuptable.hdf --approx --smcpp_file ../smc++/oreganus-SMC.csv
+
+### concolor, 7 individuals 
+
+pyrho make_table -n 14 -N 18 -m 2.4e-9 --logfile . --outfile ./lookup/concolor_n_14_N_18.lookuptable.hdf --approx --smcpp_file ../smc++/concolor-SMC.csv
+
+
+```
+
+Find the hyperparameter settings that fit our demography inferred by smc++.
+
+```
+# white tank pyrrhus
+pyrho hyperparam --numthreads 24 -n 10 --mu 2.4e-9 --smcpp_file ../smc++/white.tank.pyrrhus-SMC.csv --blockpenalty 20,25,50,100 --windowsize 25,50 --logfile . --tablefile ./lookup/whitetank.pyrrhus_n_10_N_13.lookuptable.hdf --num_sims 3 --outfile ./hyperparam/whitetank.pyrrhus_hyperparam_results.txt 
+
+# white tank pyrrhus with repeats
+pyrho hyperparam --numthreads 24 -n 10 --mu 2.4e-9 --smcpp_file ../smc++/white.tank.pyrrhus_wrepeats-SMC.csv --blockpenalty 20,25,50,100 --windowsize 25,50 --logfile . --tablefile ./lookup/whitetank.pyrrhus_wrepeats_n_10_N_13.lookuptable.hdf --num_sims 3 --outfile ./hyperparam/whitetank.pyrrhus_wrepeats_hyperparam_results.txt 
+
+
+### viridis
+pyrho hyperparam --numthreads 16 -n 12 --mu 2.4e-9 --smcpp_file ../smc++/viridis-SMC.csv --blockpenalty 20,25,50,100 --windowsize 25,50 --logfile . --tablefile ./lookup/viridis_n_12_N_15.lookuptable.hdf  --num_sims 3 --outfile ./hyperparam/viridis_hyperparam_results.txt 
+
+
+### stephensi
+
+pyrho hyperparam --numthreads 24 -n 12 --mu 2.4e-9 --smcpp_file ../smc++/stephensi-SMC.csv --blockpenalty 20,25,50,100 --windowsize 25,50 --logfile . --tablefile ./lookup/stephensi_n_12_N_15.lookuptable.hdf  --num_sims 3 --outfile ./hyperparam/stephensi_hyperparam_results.txt 
+
+### oreganus
+
+pyrho hyperparam --numthreads 24 -n 32 --mu 2.4e-9 --smcpp_file ../smc++/oreganus-SMC.csv --blockpenalty 20,25,50,100 --windowsize 25,50 --logfile . --tablefile ./lookup/oreganus_n_32_N_40.lookuptable.hdf  --num_sims 3 --outfile ./hyperparam/oreganus_hyperparam_results.txt 
+
+### concolor 
+
+pyrho hyperparam --numthreads 24 -n 14 --mu 2.4e-9 --smcpp_file ../smc++/concolor-SMC.csv --blockpenalty 20,25,50,100 --windowsize 25,50 --logfile . --tablefile ./lookup/concolor_n_14_N_18.lookuptable.hdf  --num_sims 3 --outfile ./hyperparam/concolor_hyperparam_results.txt 
+
+```
+
+Run optimize on each chromosome. We chose a Block penalty of 20 and a Window size of 50 because they generally resulted in the greatest correlation and lowest L2. 
+
+```
+### white tank pyrrhus
+# Autosomes
+nohup bash -c 'for chrom in `cat ../smc++/chromlist.nounplaced.txt`; do pyrho optimize --numthreads 24 --tablefile ./lookup/whitetank.pyrrhus_n_10_N_13.lookuptable.hdf --vcffile ./vcf/whitetank.pyrrhus.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz --outfile ./results/whitetank.pyrrhus.$chrom.rmap --blockpenalty 20 --windowsize 50 --ploidy 2 --logfile .; done' > ./whitetank.pyrho_auto_optimize.log & 
+
+# Z
+nohup pyrho optimize --numthreads 8 --tablefile ./lookup/whitetank.pyrrhus_n_10_N_13.lookuptable.hdf --vcffile ./vcf/whitetank.pyrrhus.allsites.final.chrZ.snps.miss02.mac1.vcf.gz --outfile ./results/whitetank.pyrrhus.chrZ.rmap --blockpenalty 20 --windowsize 50 --ploidy 2 --logfile . > ./whitetank.pyrho_chrZ_optimize.log & 
+
+### viridis
+# Autosomes
+nohup bash -c 'for chrom in `cat ../smc++/chromlist.nounplaced.txt`; do pyrho optimize --numthreads 16 --tablefile ./lookup/viridis_n_12_N_15.lookuptable.hdf  --vcffile ./vcf/viridis.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz --outfile ./results/viridis.$chrom.rmap --blockpenalty 20 --windowsize 50 --ploidy 2 --logfile .; done' > ./viridis_auto_optimize.log & 
+
+nohup bash -c 'for chrom in `cat ../smc++/chromlist.nounplaced.txt`; do pyrho optimize --numthreads 2 --tablefile ./lookup/viridis_n_12_N_15.lookuptable.hdf  --vcffile ./vcf/viridis.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz --outfile ./results/viridis.$chrom.bp10.rmap --blockpenalty 10 --windowsize 50 --ploidy 2 --logfile .; done' > ./viridis_auto_optimize.bp10.log & 
+
+# Z
+nohup pyrho optimize --numthreads 8 --tablefile ./lookup/viridis_n_12_N_15.lookuptable.hdf  --vcffile ./vcf/viridis.allsites.final.chrZ.snps.miss02.mac1.vcf.gz --outfile ./results/viridis.chrZ.rmap --blockpenalty 20 --windowsize 50 --ploidy 2 --logfile . > ./viridis_chrZ_optimize.log & 
+
+nohup pyrho optimize --numthreads 2 --tablefile ./lookup/viridis_n_12_N_15.lookuptable.hdf  --vcffile ./vcf/viridis.allsites.final.chrZ.snps.miss02.mac1.vcf.gz --outfile ./results/viridis.chrZ.bp10.rmap --blockpenalty 10 --windowsize 50 --ploidy 2 --logfile . > ./viridis_chrZ_optimize.bp10.log & 
+
+### stephensi
+# Autosomes
+nohup bash -c 'for chrom in `cat ../smc++/chromlist.nounplaced.txt`; do pyrho optimize --numthreads 24 --tablefile ./lookup/stephensi_n_12_N_15.lookuptable.hdf  --vcffile ./vcf/stephensi.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz --outfile ./results/stephensi.$chrom.rmap --blockpenalty 20 --windowsize 50 --ploidy 2 --logfile .; done' > ./stephensi_auto_optimize.log & 
+
+nohup bash -c 'for chrom in `cat ../smc++/chromlist.nounplaced.txt`; do pyrho optimize --numthreads 2 --tablefile ./lookup/stephensi_n_12_N_15.lookuptable.hdf  --vcffile ./vcf/stephensi.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz --outfile ./results/stephensi.$chrom.bp10.rmap --blockpenalty 10 --windowsize 50 --ploidy 2 --logfile .; done' > ./stephensi_auto_optimize.bp10.log & 
+
+# Z
+nohup pyrho optimize --numthreads 8 --tablefile ./lookup/stephensi_n_12_N_15.lookuptable.hdf  --vcffile ./vcf/stephensi.allsites.final.chrZ.snps.miss02.mac1.vcf.gz --outfile ./results/stephensi.chrZ_scaffold_4_1contigs.rmap --blockpenalty 20 --windowsize 50 --ploidy 2 --logfile . > ./stephensi_chrZ_optimize.log & 
+
+nohup pyrho optimize --numthreads 2 --tablefile ./lookup/stephensi_n_12_N_15.lookuptable.hdf  --vcffile ./vcf/stephensi.allsites.final.chrZ.snps.miss02.mac1.vcf.gz --outfile ./results/stephensi.chrZ_scaffold_4_1contigs.bp10.rmap --blockpenalty 10 --windowsize 50 --ploidy 2 --logfile . > ./stephensi_chrZ_optimize.bp10.log & 
+
+ 
+### oreganus
+# Autosomes
+nohup bash -c 'for chrom in `cat ../smc++/chromlist.nounplaced.txt`; do pyrho optimize --numthreads 16 --tablefile ./lookup/oreganus_n_32_N_40.lookuptable.hdf  --vcffile ./vcf/oreganus.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz --outfile ./results/oreganus.$chrom.rmap --blockpenalty 20 --windowsize 50 --ploidy 2 --logfile .; done' > ./oreganus_auto_optimize.log & 
+
+nohup bash -c 'for chrom in `cat ../../smc++/chromlist.nounplaced.txt`; do pyrho optimize --numthreads 2 --tablefile ./lookup/oreganus_n_32_N_40.lookuptable.hdf  --vcffile ./vcf/oreganus.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz --outfile ../results/oreganus.$chrom.bp10.rmap --blockpenalty 10 --windowsize 50 --ploidy 2 --logfile .; done' > ./oreganus_auto_optimize.bp10.log & 
+
+# Z
+nohup pyrho optimize --numthreads 8 --tablefile ./lookup/oreganus_n_32_N_40.lookuptable.hdf --vcffile ./vcf/oreganus.allsites.final.chrZ.snps.miss02.mac1.vcf.gz --outfile ./results/oreganus.chrZ_scaffold_4_1contigs.rmap --blockpenalty 20 --windowsize 50 --ploidy 2 --logfile . > ./oreganus_chrZ_optimize.log & 
+
+nohup pyrho optimize --numthreads 2 --tablefile ./lookup/oreganus_n_32_N_40.lookuptable.hdf --vcffile ./vcf/oreganus.allsites.final.chrZ.snps.miss02.mac1.vcf.gz --outfile ../results/oreganus.chrZ_scaffold_4_1contigs.bp10.rmap --blockpenalty 10 --windowsize 50 --ploidy 2 --logfile . > ./oreganus_chrZ_optimize.bp10.log & 
+
+### concolor  
+# Autosomes
+nohup bash -c 'for chrom in `cat ../smc++/chromlist.nounplaced.txt`; do pyrho optimize --numthreads 16 --tablefile ./lookup/concolor_n_14_N_18.lookuptable.hdf  --vcffile ./vcf/concolor.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz --outfile ./results/concolor.$chrom.rmap --blockpenalty 20 --windowsize 50 --ploidy 2 --logfile .; done' > ./concolor_auto_optimize.log & 
+
+nohup bash -c 'for chrom in `cat ../smc++/chromlist.nounplaced.txt`; do pyrho optimize --numthreads 2 --tablefile ../lookup/concolor_n_14_N_18.lookuptable.hdf  --vcffile ./vcf/concolor.allsites.final.auto.snps.miss02.mac1.$chrom.vcf.gz --outfile ../results/concolor.$chrom.bp10.rmap --blockpenalty 10 --windowsize 50 --ploidy 2 --logfile .; done' > ./concolor_auto_optimize.bp10.log & 
+
+
+# Z
+nohup pyrho optimize --numthreads 8 --tablefile ./lookup/concolor_n_14_N_18.lookuptable.hdf  --vcffile ./vcf/concolor.allsites.final.chrZ.snps.miss02.mac1.vcf.gz --outfile ./results/concolor.chrZ_scaffold_4_1contigs.rmap --blockpenalty 20 --windowsize 50 --ploidy 2 --logfile . > ./concolor_chrZ_optimize.log & 
+
+nohup pyrho optimize --numthreads 8 --tablefile ./lookup/concolor_n_14_N_18.lookuptable.hdf  --vcffile ./vcf/concolor.allsites.final.chrZ.snps.miss02.mac1.vcf.gz --outfile ./results/concolor.chrZ_scaffold_4_1contigs.bp10.rmap --blockpenalty 10 --windowsize 50 --ploidy 2 --logfile . > ./concolor_chrZ_optimize.log & 
+
+```
+
+Format results. We will generate bed files, concatenate all of the recombination maps, and then calculate the mean recombination rate in those windows.  
+ 1. Make bed files
+ 
+ ```
+ grep "chr" /media/queen/extradrive1/crotalus_pyrrhus_genome/C_pyrrhus_chrom.sizes | bedtools makewindows -g - -w 1000000 -s 100000 >> ./Crotalus_pyrrhus.final.1Mb-100kb.bed
+ grep "chr" /media/queen/extradrive1/crotalus_pyrrhus_genome/C_pyrrhus_chrom.sizes | bedtools makewindows -g - -w 1000000 >> ./Crotalus_pyrrhus.final.1Mb.bed
+ grep "chr" /media/queen/extradrive1/crotalus_pyrrhus_genome/C_pyrrhus_chrom.sizes | bedtools makewindows -g - -w 100000 >> ./Crotalus_pyrrhus.final.100kb.bed
+ 
+ ```
+ 
+ 2. Concatenate recombination maps 
+ 
+ We need a list of the chromosomes, so we will create one. 
+ 
+ ``` 
+ cd ./results
+ 
+ ls | grep "chr" | sed 's/pyrrhus.//g' | sed 's/.rmap//g' > ../chromlist_auto+z.txt
+ 
+ cd ../
+ 
+ # Reorder properly 
+ tail chromlist_auto+z.txt -n 10 | head -n 9 > tmp.txt
+ 
+ head chromlist_auto+z.txt -n 8 >> tmp.txt 
+ 
+ tail -n 1 chromlist_auto+z.txt >> tmp.txt 
+ 
+ mv tmp.txt chromlist_auto+z.txt
+ 
+ # Concatenate recombination maps 
+ 
+ cd ./results
+ 
+ nohup cat chromlist_auto+z.txt | while read i; do scaff=`echo "$i" | cut -f 1`; chrom=`echo "$i" | cut -f 2`; awk -v var=$scaff 'BEGIN{OFS="\t"}{print var,$1,$2,$3}' ./results/pyrrhus.$chrom.rmap >> ./pyrrhus.all.rmap; done > concat_pyrrhus_recombmap.log &
+ 
+ # Do it for the ridiculous block penalty
+nohup cat chromlist_auto+z.txt | while read i; do scaff=`echo "$i" | cut -f 1`; chrom=`echo "$i" | cut -f 2`; awk -v var=$scaff 'BEGIN{OFS="\t"}{print var,$1,$2,$3}' ./results/pyrrhus.$chrom.block50.rmap >> ./pyrrhus.all.block50.rmap; done > concat_pyrrhus_recombmap.block50.log &
+
+### white tank pyrrhus 
+cd ./results
+
+mv whitetank.pyrrhus.chrZ.rmap whitetank.pyrrhus.chrZ_scaffold_4_1contigs.rmap
+
+cd ..
+ 
+nohup cat chromlist_auto+z.txt | while read i; do scaff=`echo "$i" | cut -f 1`; chrom=`echo "$i" | cut -f 2`; awk -v var=$scaff 'BEGIN{OFS="\t"}{print var,$1,$2,$3}' ./results/whitetank.pyrrhus.$chrom.rmap >> ./whitetank.pyrrhus.all.rmap; done > concat_whitetank.pyrrhus_recombmap.log &
+
+# white tank pyrrhus with repeats 
+
+nohup cat chromlist_auto+z.txt | while read i; do scaff=`echo "$i" | cut -f 1`; chrom=`echo "$i" | cut -f 2`; awk -v var=$scaff 'BEGIN{OFS="\t"}{print var,$1,$2,$3}' ./results/whitetank.pyrrhus.wrepeats.$chrom.rmap >> ./whitetank.pyrrhus.wrepeats.all.rmap; done > concat_whitetank.pyrrhus_wrepeats_recombmap.log &
+
+# Viridis 
+cat chromlist_auto+z.txt | while read i; do scaff=`echo "$i" | cut -f 1`; chrom=`echo "$i" | cut -f 2`; awk -v var=$scaff 'BEGIN{OFS="\t"}{print var,$1,$2,$3}' ./results/viridis.$chrom.rmap >> ./viridis.rmap; done
+
+# bp10
+cat chromlist_auto+z.txt | while read i; do scaff=`echo "$i" | cut -f 1`; chrom=`echo "$i" | cut -f 2`; awk -v var=$scaff 'BEGIN{OFS="\t"}{print var,$1,$2,$3}' ./results/viridis.$chrom.bp10.rmap >> ./viridis.bp10.rmap; done
+
+### stephensi 
+cat chromlist_auto+z.txt | while read i; do scaff=`echo "$i" | cut -f 1`; chrom=`echo "$i" | cut -f 2`; awk -v var=$scaff 'BEGIN{OFS="\t"}{print var,$1,$2,$3}' ./results/stephensi.$chrom.rmap >> ./stephensi.rmap; done
+
+# bp10 
+cat chromlist_auto+z.txt | while read i; do scaff=`echo "$i" | cut -f 1`; chrom=`echo "$i" | cut -f 2`; awk -v var=$scaff 'BEGIN{OFS="\t"}{print var,$1,$2,$3}' ./results/stephensi.$chrom.bp10.rmap >> ./stephensi.bp10.rmap; done
+
+### oreganus
+cat chromlist_auto+z.txt | while read i; do scaff=`echo "$i" | cut -f 1`; chrom=`echo "$i" | cut -f 2`; awk -v var=$scaff 'BEGIN{OFS="\t"}{print var,$1,$2,$3}' ./results/oreganus.$chrom.rmap >> ./oreganus.rmap; done
+
+# bp 10
+
+cat chromlist_auto+z.txt | while read i; do scaff=`echo "$i" | cut -f 1`; chrom=`echo "$i" | cut -f 2`; awk -v var=$scaff 'BEGIN{OFS="\t"}{print var,$1,$2,$3}' ./results/oreganus.$chrom.bp10.rmap >> ./oreganus.bp10.rmap; done
+
+### concolor
+cat chromlist_auto+z.txt | while read i; do scaff=`echo "$i" | cut -f 1`; chrom=`echo "$i" | cut -f 2`; awk -v var=$scaff 'BEGIN{OFS="\t"}{print var,$1,$2,$3}' ./results/concolor.$chrom.rmap >> ./concolor.rmap; done
+
+# bp 10
+cat chromlist_auto+z.txt | while read i; do scaff=`echo "$i" | cut -f 1`; chrom=`echo "$i" | cut -f 2`; awk -v var=$scaff 'BEGIN{OFS="\t"}{print var,$1,$2,$3}' ./results/concolor.$chrom.bp10.rmap >> ./concolor.bp10.rmap; done
+
+ ```
+
+ 3. Set any recombination rates greater than the 99% to `.`, which represents NA.
+ 
+```
+dat <- read.table("whitetank.pyrrhus.all.rmap")
+
+dat$V4[dat$V4>=quantile(dat$V4, probs = 0.99, na.rm TRUE)] <- NA
+
+write.table(dat, "whitetank.pyrrhus.all.outlier.masked.rmap", quote = FALSE, row.names = FALSE, sep = "\t", col.names = FALSE)
+
+```
+
+```
+cd /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pyrho/hotspots/revisons_species/concolor
+
+dat <- read.table("concolor.bp10.rmap")
+
+dat$V4 <- as.numeric(dat$V4)
+
+dat$V4[dat$V4>=quantile(dat$V4, probs = 0.99)[1]] <- NA
+
+write.table(dat, "concolor.outlier.masked.bp10.rmap", quote = FALSE, row.names = FALSE, sep = "\t", col.names = FALSE)
+
+cd /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pyrho/hotspots/revisons_species/stephensi
+
+dat <- read.table("stephensi.bp10.rmap")
+
+dat$V4 <- as.numeric(dat$V4)
+
+dat$V4[dat$V4>=quantile(dat$V4, probs = 0.99)[1]] <- NA
+
+write.table(dat, "stephensi.outlier.masked.bp10.rmap", quote = FALSE, row.names = FALSE, sep = "\t", col.names = FALSE)
+
+cd /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pyrho/hotspots/revisons_species/oreganus
+
+dat <- read.table("oreganus.bp10.rmap")
+
+dat$V4 <- as.numeric(dat$V4)
+
+dat$V4[dat$V4>=quantile(dat$V4, probs = 0.99)[1]] <- NA
+
+write.table(dat, "oreganus.outlier.masked.bp10.rmap", quote = FALSE, row.names = FALSE, sep = "\t", col.names = FALSE)
+
+cd /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pyrho/hotspots/revisons_species/viridis
+
+dat <- read.table("viridis.bp10.rmap")
+
+dat$V4 <- as.numeric(dat$V4)
+
+dat$V4[dat$V4>=quantile(dat$V4, probs = 0.99)[1]] <- NA
+
+write.table(dat, "viridis.outlier.masked.bp10.rmap", quote = FALSE, row.names = FALSE, sep = "\t", col.names = FALSE)
+
+```
+
+4. Calculate mean recombination rate in windows
+ 
+```
+
+### white tank pyrrhus
+echo -e "chrom\tstart\tend\trate" > whitetank.pyrrhus.rmap.1Mb-100kb.txt; bedtools map -a ./Crotalus_pyrrhus.final.1Mb-100kb.bed -b ./whitetank.pyrrhus.all.rmap -o mean -c 4 >> whitetank.pyrrhus.rmap.1Mb-100kb.txt
+
+echo -e "chrom\tstart\tend\trate" > whitetank.pyrrhus.rmap.1Mb.txt; bedtools map -a ./Crotalus_pyrrhus.final.1Mb.bed -b ./whitetank.pyrrhus.all.rmap -o mean -c 4 >> whitetank.pyrrhus.rmap.1Mb.txt
+
+echo -e "chrom\tstart\tend\trate" > whitetank.pyrrhus.rmap.100kb.txt; bedtools map -a ./Crotalus_pyrrhus.final.100kb.bed -b ./whitetank.pyrrhus.all.rmap -o mean -c 4 >> whitetank.pyrrhus.rmap.100kb.txt
+
+### Viridis 
+echo -e "chrom\tstart\tend\trate" > viridis.rmap.1Mb.txt; bedtools map -a ./Crotalus_pyrrhus.final.1Mb.bed -b ./viridis.rmap -o mean -c 4 >> viridis.rmap.1Mb.txt
+
+### stephensi
+echo -e "chrom\tstart\tend\trate" > stephensi.rmap.1Mb.txt; bedtools map -a ./Crotalus_pyrrhus.final.1Mb.bed -b ./stephensi.rmap -o mean -c 4 >> stephensi.rmap.1Mb.txt
+
+### oreganus
+echo -e "chrom\tstart\tend\trate" > oreganus.rmap.1Mb.txt; bedtools map -a ./Crotalus_pyrrhus.final.1Mb.bed -b ./oreganus.rmap -o mean -c 4 >> oreganus.rmap.1Mb.txt
+
+### concolor 
+echo -e "chrom\tstart\tend\trate" > concolor.rmap.1Mb.txt; bedtools map -a ./Crotalus_pyrrhus.final.1Mb.bed -b ./concolor.rmap -o mean -c 4 >> concolor.rmap.1Mb.txt
+```
+
 
 
 ------------------------------------------------------------------------------------------
