@@ -6,7 +6,7 @@
 
 I am in the process of uploading scripts to this repository to ensure that they are properly annotated, but please reach out if you have any questions.
 
-This repository contains the computational workflow and scripts for [Farleigh et al., (*accepted*)](). Please email Keaka Farleigh (keakafarleigh@virginia.edu; keakafarleigh@gmail.com) if you have any questions. 
+This repository contains the computational workflow and scripts for [Farleigh et al., (*in press at PNAS*)](). Please email Keaka Farleigh (keakafarleigh@virginia.edu; keakafarleigh@gmail.com) if you have any questions. 
 
 ## Citation
 
