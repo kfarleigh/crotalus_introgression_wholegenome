@@ -28,18 +28,18 @@ We assigned chromosome names using a synteny-based approach as implemented in [m
 
 We sequenced newly generated libraries on Illumina NovaSeq 6000 lanes to generate 150 bp paired-end reads. We then trimmed our sequence data with [Trimmomatic](https://github.com/usadellab/trimmomatic). We then followed [GATK's best practices workflow](https://gatk.broadinstitute.org/hc/en-us/sections/360007226651-Best-Practices-Workflows) to call and filter SNPs. The pipeline to perform this set of analyses is called `variant_calling.md`.
 
-# Workflow for analysis of the genomic landscape of introgression within Crotalus - Part 1 - Processing, mapping, and variant calling
+#### Workflow for analysis of the genomic landscape of introgression within Crotalus - Part 1 - Processing, mapping, and variant calling
 
 Author: Keaka Farleigh, edited from Drew Schield's workflow
 Date: October 15th, 2024
 Email: keakafarleigh@virginia.edu
 
-## Overview
+##### Overview
 
 In this part of the workflow, we'll quality trim raw reads, perform mapping to the reference genome, and call variants.
 
 ------------------------------------------------------------------------------------------
-## Set up environment
+##### Set up environment
 
 We'll process the data using the directories on the `extradrive1` drive:
 
@@ -77,7 +77,7 @@ cd /media/keaka/extradrive5/crotalus_genomic_landscape/
 mkdir log
 ```
 
-## File formatting
+##### File formatting
 Some of the files we received from the Castoe group had a .fq.gz extension instead of .fastq.gz. This is not a big deal, but we will rename those files to match everything else.
 
 ```
@@ -105,9 +105,9 @@ for i in `ls *R2*.fastq.gz`; do mv $i `echo $i | cut -d_ -f1`_R2_.fastq.gz; done
 Now, we can move on to quality trimming.
 
 ------------------------------------------------------------------------------------------
-## 1. Quality trimming using Trimmomatic
+##### 1. Quality trimming using Trimmomatic
 
-### 1. Format sample list
+###### 1. Format sample list
 
 We will change directories into the fastq directory. Then, we will create the `listTrimmomatic.txt` which contains the sample names without the file extensions. 
 
@@ -127,7 +127,7 @@ ls *R1* | cut -d_ -f1,2,3 >> ../listTrimmomatic_UO.txt
 
 Note: In preliminary runs, samples RS_1 and RS_4 stopped prematurely due to corruption in the compression of the read 2 file (tested using `gunzip -t $file`). We will run these as single end analyses.
 
-### 2. Format script to run with `parallel`, calling the sample list
+###### 2. Format script to run with `parallel`, calling the sample list
 
 `runTrimmomatic_parallel.sh`:
 
@@ -152,7 +152,7 @@ indv=$1
 trimmomatic PE -phred33 -threads 4 /media/queen/extradrive1/crotalus_genomic_landscape/fastq/${indv}_R1_001.fastq.gz /media/queen/extradrive1/crotalus_genomic_landscape/fastq/${indv}_R2_001.fastq.gz /media/queen/extradrive1/crotalus_genomic_landscape/fastq_filtered/${indv}_1_P.trim.fq.gz /media/queen/extradrive1/crotalus_genomic_landscape/fastq_filtered/${indv}_1_U.trim.fq.gz /media/queen/extradrive1/crotalus_genomic_landscape/fastq_filtered/${indv}_2_P.trim.fq.gz /media/queen/extradrive1/crotalus_genomic_landscape/fastq_filtered/${indv}_2_U.trim.fq.gz LEADING:20 TRAILING:20 MINLEN:32 AVGQUAL:30 > ./log/runTrimmomatic.$indv.log
 ```
 
-### 3. Run script with `parallel`
+###### 3. Run script with `parallel`
 
 ```
 cd /media/keaka/extradrive5/crotalus_genomic_landscape
@@ -168,7 +168,7 @@ parallel --progress --joblog ./log/logfile.trimmomatic -j 8 --workdir . ./runTri
 nohup parallel --progress --joblog ./log/logfile_UO.trimmomatic -j 7 --workdir . ./runTrimmomatic_parallel_UO.sh :::: listTrimmomatic_UO.txt &
 ```
 
-### 4. Remove unpaired reads from output directory to save disk space
+###### 4. Remove unpaired reads from output directory to save disk space
 
 ```
 # For sequences from previously published data and the Castoe lab
@@ -179,7 +179,7 @@ rm /media/queen/extradrive1/crotalus_genomic_landscape/fastq_filtered/*U.trim.fq
 rm /media/queen/extradrive1/crotalus_genomic_landscape/fastq_filtered/Undetermined*
 ```
 
-### 5. Rename trimmed reads from the University of Oregon
+###### 5. Rename trimmed reads from the University of Oregon
 
 ```
 for i in `ls *_1_P.trim.fq.gz `; do mv $i `echo $i | cut -d_ -f1`_1_P.trim.fq.gz; done
@@ -187,11 +187,11 @@ for i in `ls *_2_P.trim.fq.gz `; do mv $i `echo $i | cut -d_ -f1`_2_P.trim.fq.gz
 ```
 
 ------------------------------------------------------------------------------------------
-## 2. Mapping to reference genome
+##### 2. Mapping to reference genome
 
 We'll map the trimmed reads to the chromosome-assigned reference genome `/media/queen/extradrive1/crotalus_pyrrhus_genome/bwa_index/Crotalus_pyrrhus.hap1.final.fasta`.
 
-### 1. Format script to run `bwa` to map and index bam files
+###### 1. Format script to run `bwa` to map and index bam files
 
 `runBWA_UO_parallel.sh`
 
@@ -201,7 +201,7 @@ bwa mem -t 4 -R "@RG\tID:$indv\tLB:Crotalus\tPL:illumina\tPU:NovaSeq6000\tSM:$in
 samtools index -@ 4 /media/queen/TombBucket/crotalus_genomic_landscape/bam/$indv.bam
 ```
 
-### 2. Run script with `parallel`
+###### 2. Run script with `parallel`
 
 ```
 # Create the list for BWA
@@ -212,17 +212,17 @@ parallel --progress --joblog ./log/logfile.bwa -j 10 --workdir . ./runBWA_UO_par
 ```
 
 ------------------------------------------------------------------------------------------
-## 3. Variant calling
+##### 3. Variant calling
 
 We'll call genomic variants using `gatk`, starting with individual variant calls using `HaplotypeCaller`, followed by cohort variant calls using `GenotypeGVCFs`.
 
-### Format sample list
+###### Format sample list
 
 `listGATK.txt`
 
-### 1. Individual variant calls using HaplotypeCaller
+###### 1. Individual variant calls using HaplotypeCaller
 
-#### 1. Create listGATK.txt
+####### 1. Create listGATK.txt
 
 ```
 cd /media/queen/TombBucket/crotalus_genomic_landscape/bam
@@ -232,7 +232,7 @@ ls *.bam | cut -d .  -f1 >> ../listGATK.txt
 cd ../
 ```
 
-#### 2. Format script to run GATK HaplotypeCaller
+####### 2. Format script to run GATK HaplotypeCaller
 
 `runGATKHaplotypeCaller_parallel.sh`
 
@@ -287,7 +287,7 @@ gatk CreateSequenceDictionary -R /media/queen/extradrive1/crotalus_pyrrhus_genom
 
 ```
 
-#### 3. Run script with `parallel`
+####### 3. Run script with `parallel`
 
 ```
 # Run it 
@@ -337,22 +337,22 @@ cd ../
 
 ```
 
-#### 4. Tabix index output gVCFs
+####### 4. Tabix index output gVCFs
 
 ```
 for i in `cat list_GATK_allsamples.txt`; do tabix -p vcf /media/queen/TombBucket/crotalus_genomic_landscape/gvcf/$i.raw.snps.indels.g.vcf.gz -f; done
 ```
 
-### 2. Cohort variant calls using GenotypeGVCFs
+###### 2. Cohort variant calls using GenotypeGVCFs
 
-### Format sample list (with paths to gVCF files)
+###### Format sample list (with paths to gVCF files)
 
 Generate a sample path with the full list.
 ``` 
 ls -1 -d "$PWD/gvcf/"*.vcf.gz > gVCFlist.list 
 ```
 
-### Install gatk3
+###### Install gatk3
 
 Note: We will create a new conda environment and install gatk3. This allows us to supply a list of .g.vcfs to GenotypeGVCFs. 
 
@@ -365,7 +365,7 @@ conda install conda-forge::mamba
 mamba install gatk
 ```
 
-### Run GenotypeGVCFs on sets of intervals
+###### Run GenotypeGVCFs on sets of intervals
 
 
 Generate the command to perform genotyping with GenotypeGVCFs. We escape the quotes (using `\`) so that echo will print them out in the command. 
@@ -393,7 +393,7 @@ cd ../
 
 
 ------------------------------------------------------------------------------------------
-## 4. Sex identification
+##### 4. Sex identification
 
 We'll use relative read depths on the Z chromosome and autosomes to infer genetic sex of each individual.
 
@@ -401,7 +401,7 @@ We'll extract mapping data for Chromosome 3, taking the median as an 'autosomal 
 
 We already have these data for the barn swallow samples, so here we'll focus on the congeners.
 
-### Set up environment
+### ###Set up environment
 
 ```
 cd /media/queen/extradrive1/crotalus_genomic_landscape/analysis
@@ -411,7 +411,7 @@ cd sex_identification
 mkdir mosdepth_results
 ```
 
-### 1. Format sample and scaffold input files
+###### 1. Format sample and scaffold input files
 
 Make a list of the samples: `mosdepth_samplelist_batch1.txt`.
 
@@ -440,7 +440,7 @@ bedtools makewindows -g chrom.chrZ.genome -w 10000 > chrom.chrZ.10kb.bed
 head chrom.chrZ.10kb.bed
 ```
 
-### 2. Write Python script to quantify autosome median and log2 Z/Autosome depth ratio
+###### 2. Write Python script to quantify autosome median and log2 Z/Autosome depth ratio
 
 `identifySex.py`
 
@@ -480,7 +480,7 @@ else:
 	print za_mean, sample, message
 ```
 
-### 3. Write wrapper script to run mosdepth and identifySex.py
+###### 3. Write wrapper script to run mosdepth and identifySex.py
 
 `runSexIdentification.sh`
 
@@ -495,24 +495,24 @@ for i in `cat $list`; do
 done
 ```
 
-### 4. Run script
+###### 4. Run script
 
 ```
 nohup sh runSexIdentification.sh mosdepth_samplelist_batch1.txt > runSexIdentification.log &
 ```
 
-### 5. Extract general coverage information from mosdepth results
+###### 5. Extract general coverage information from mosdepth results
 
 ```
 for indv in `cat mosdepth_samplelist_batch1.txt`; do mean=`awk '{ sum += $4; n++ } END { if (n > 0) print sum / n; }' ./mosdepth_results/$indv.chr4.regions.bed`; echo $indv $mean; done
 ```
 
 ------------------------------------------------------------------------------------------
-## 5. Variant filtering
+##### 5. Variant filtering
 
 In this section we'll impose various filtering steps to produce high-quality SNPs for downstream analysis.
 
-### 1. Hard filters in GATK
+###### 1. Hard filters in GATK
 
 We'll first flag genotypes to be filtered based on the following specs:
 * QD < 2.0
@@ -570,13 +570,13 @@ nohup bcftools filter --threads 32 -e 'TYPE="indel" || FILTER="QD2" || FILTER="F
 nohup bcftools index --threads  32 -t /media/queen/TombBucket/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.HardFilter.recode.vcf.gz > ../log/bcftools_index_hardfilter.log & 
 ```
 
-### 2. Filtering female heterozygous sites on the sex chromosomes, we only have the Z at this point.
+###### 2. Filtering female heterozygous sites on the sex chromosomes, we only have the Z at this point.
 
 Females are hemizygous ZW, so should not have heterozygous genotype calls on either the Z or W chromosome.
 
 We'll identify any heterozygous calls in known females then conservatively mask these in all individuals.
 
-#### 1. Format scaffold-assigned BED files for parsing chromosomes, these files are tab-delimited and have 3 columns: the chromosome, the start of the chromosome (1), and the end of the chromosome (length of the chromosome)
+####### 1. Format scaffold-assigned BED files for parsing chromosomes, these files are tab-delimited and have 3 columns: the chromosome, the start of the chromosome (1), and the end of the chromosome (length of the chromosome)
 
 ```
 cut -f1,2 /media/queen/extradrive1/crotalus_pyrrhus_genome/Crotalus_pyrrhus.hap1.final.fasta.fai | awk -v OFS='\t' '{print $0,"1"}' | awk -v OFS='\t' '{print$1,$3,$2}' > crotalus_chrom_regions.bed
@@ -592,7 +592,7 @@ grep -v "chrZ" crotalus_chrom_regions.bed > crotalus_autosomes.bed
 grep "chrZ" crotalus_autosomes.bed
 ```
 
-#### 2. Format female individual list
+####### 2. Format female individual list
 
 This is based on the sex identification procedure above.
 
@@ -611,7 +611,7 @@ grep -w "male" crotalus_samplesex.txt | cut -f 1 -d " " > crotalus_males.txt
 
 ```
 
-#### 3. Parse autosomes and Z chromosome
+####### 3. Parse autosomes and Z chromosome
 
 
 ```
@@ -619,13 +619,13 @@ nohup bcftools view --threads 24 -R crotalus_autosomes.bed -O z -o /media/queen/
 nohup bcftools view --threads 16 -R crotalus_Zchrom.bed -O z -o /media/queen/TombBucket/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.HardFilter.recode.chrZ.vcf.gz /media/queen/TombBucket/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.HardFilter.recode.vcf.gz > ./log/zchrom_subset.log &
 ```
 
-#### 4. Extract biallelic SNPs from the Z chromosome VCF
+####### 4. Extract biallelic SNPs from the Z chromosome VCF
 
 ```
 nohup bcftools view --threads 16 -m2 -M2 -U -v snps -O z -o /media/queen/TombBucket/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.HardFilter.recode.chrZ.snps.vcf.gz /media/queen/TombBucket/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.HardFilter.recode.chrZ.vcf.gz > ./log/biallelic_zfilter.log &
 ```
 
-#### 5. Identify female heterozygous sites using Python script
+####### 5. Identify female heterozygous sites using Python script
 
 Run `./sexChrFemaleHeterozygous.py` to extract female heterozygous genotype positions on the sex chromosomes.
 ```
@@ -633,7 +633,7 @@ gunzip /media/queen/TombBucket/crotalus_genomic_landscape/vcf/crotalus_genus.all
 nohup python sexChrFemaleHeterozygous_v2.py crotalus_females.txt /media/queen/TombBucket/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.HardFilter.recode.chrZ.snps.vcf ./log/crotalus_genus.allsites.HardFilter.recode.chrZ.snps.FemaleZhetSites.txt > ./log/identifyfemalehetsonZ.log &
 ```
 
-#### 6. Convert output to BED format and index with GATK
+####### 6. Convert output to BED format and index with GATK
 
 ```
 conda activate gatk4
@@ -641,7 +641,7 @@ awk 'BEGIN{OFS="\t"}{print $1,$2-1,$2}' ./log/crotalus_genus.allsites.HardFilter
 nohup gatk IndexFeatureFile -I ./log/crotalus_genus.allsites.HardFilter.recode.chrZ.snps.FemaleZhetSites.bed > ./log/Index_Zhetsites.log &
 ```
 
-#### 7. Run GATK VariantFiltration to annotate female heterozygous sites and mask with bcftools
+####### 7. Run GATK VariantFiltration to annotate female heterozygous sites and mask with bcftools
 
 Z chromosome:
 ```
@@ -655,7 +655,7 @@ nohup bcftools filter --threads 24 -e 'FILTER="ZHET"' --set-GTs . -O z -o /media
 nohup tabix -p vcf /media/queen/TombBucket/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.chrZ.vcf.gz  > ./log/tabix_finalZ.log &
 ```
 
-### 3. Repeat masking
+###### 3. Repeat masking
 
 Repeat annotations are in `/media/queen/extradrive1/crotalus_pyrrhus_genome/annotation/repeats/repeatmasker/5_full_mask`. We need to create a bed file that has the coordinates of the repeats.
 
@@ -678,7 +678,7 @@ nohup gatk IndexFeatureFile -I /media/queen/extradrive1/crotalus_pyrrhus_genome/
 
 The `Crotalus_pyrrhus_repeats.bed` contains the repeat locations. We'll use that to annotate the repeats. 
 
-#### 1. Annotate repeats with GATK VariantFiltration
+####### 1. Annotate repeats with GATK VariantFiltration
 
 ```
 conda activate gatk4
@@ -692,7 +692,7 @@ nohup gatk VariantFiltration -V /media/queen/TombBucket/crotalus_genomic_landsca
 
 ```
 
-#### 2. Recode repeat annotations as missing genotypes and index VCFs
+####### 2. Recode repeat annotations as missing genotypes and index VCFs
 
 ```
 nohup bcftools filter --threads 16 -e 'FILTER="REP"' --set-GTs . -O z -o /media/queen/TombBucket/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.auto.vcf.gz /media/queen/TombBucket/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.auto.tmp-rep.vcf.gz > ./log/crotalus_auto_repeatmasking.log &
@@ -704,31 +704,31 @@ nohup bcftools filter --threads 16 -e 'FILTER="REP"' --set-GTs . -O z -o /media/
 nohup tabix -p vcf /media/queen/TombBucket/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.chrZ.vcf.gz  > ./log/crotalus_tabix_finalZ.log &
 ```
 
-### 4. Extract chromosome-specific all-sites VCFs
+###### 4. Extract chromosome-specific all-sites VCFs
 
 We will extract chromosome-specific all-sites vcfs for pixy.
 
-#### 1. Set up environment
+####### 1. Set up environment
 
 ```
 cd /media/queen/TombBucket/crotalus_genomic_landscape/vcf
 mkdir chrom-specific-genus
 ```
 
-#### 2. Parse chromosome-specific autosome VCFs
+####### 2. Parse chromosome-specific autosome VCFs
 
 ```
 nohup bcftools index --threads 24 -s /media/queen/TombBucket/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.auto.vcf.gz | cut -f 1 | while read C; do bcftools view --threads 24 -O z -o /media/queen/TombBucket/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.${C}.vcf.gz /media/queen/TombBucket/crotalus_genomic_landscape/vcf/crotalus_genus.allsites.final.auto.vcf.gz "${C}" ; done > ./log/autosome_split_bychrom.log &
 
 ```
 
-#### 3. Parse Z chromosome
+####### 3. Parse Z chromosome
 
 ```
 cp ../crotalus_genus.allsites.final.chrZ.vcf.gz ./
 ```
 
-#### 4. Index VCFs
+####### 4. Index VCFs
 
 ```
 nohup bash -c 'for i in /media/queen/TombBucket/crotalus_genomic_landscape/vcf/chrom-specific-genus/*noCV13*.vcf.gz; do tabix -p vcf $i; done' > ./log/tabix_final_allsitesvcfs.log &
@@ -744,9 +744,9 @@ mv *.scaffold* ./unplaced_scaf_vcfs
 
 ```
 
-### 5. Extract biallelic SNPs
+###### 5. Extract biallelic SNPs
 
-#### 1. Extract SNPs
+####### 1. Extract SNPs
 
 ```
 cd /media/queen/TombBucket/crotalus_genomic_landscape
@@ -757,7 +757,7 @@ nohup bcftools view --threads 16 -m2 -M2 -U -v snps -O z -o /media/queen/TombBuc
 
 ```
 
-#### 2. Concatenate autosome and Z chromosome SNP VCFs
+####### 2. Concatenate autosome and Z chromosome SNP VCFs
 
 ```
 
