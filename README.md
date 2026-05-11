@@ -10,7 +10,7 @@ This repository contains the computational workflow and scripts for [Farleigh et
 
 ## Citation
 
-The citation will be here.
+Farleigh, K., D.K. Highland, M.G. Alderman, Y.Z. Francioli, S.R. Hirst, E.M. Faber, B.W. Perry, M.L. Holding, G. Castañeda-Gaytán, M. Borja, H. Franz-Chávez, C.L. Parkinson, J.L. Strickland, M.J. Margres, S.P. Mackessy, J.M. Meik, T.A. Castoe, and D. R. Schield. Evolution of genome-wide barriers to gene flow during complex speciation in rattlesnakes. *In press at PNAS*.
 
 ## Genomic data
 
