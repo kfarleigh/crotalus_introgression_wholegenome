@@ -18,7 +18,7 @@ The genomic data for this project are deposited as parts of BioProjects [PRJNA14
 
 ## Structure of this repository.
 
-This repository contains the computational workflow for [Farleigh et al., (*accepted*)](). This ReadMe will contain the entire computational workflow for the project and serve as a sort of one-stop shop. It will also tell you which scripts are associated with each analysis so that you can download pipelines for specific analyses if you wish. I have separated this ReadMe into each of the method sections listed in the [supplemental information](). Each section begins with a general description of the methods and software that are relevant before moving into the workflow. Each script referenced herein is located in the `scripts/` directory.
+This repository contains the computational workflow for [Farleigh et al., (*in press at PNAS*)](). This ReadMe will contain the entire computational workflow for the project and serve as a sort of one-stop shop. It will also tell you which scripts are associated with each analysis so that you can download pipelines for specific analyses if you wish. I have separated this ReadMe into each of the method sections listed in the [supplemental information](). Each section begins with a general description of the methods and software that are relevant before moving into the workflow. Each script referenced herein is located in the `scripts/` directory.
 
 You can jump to any of the relevant sections by clicking on the links below:
 - [Genome assembly and annotation](https://github.com/kfarleigh/crotalus_introgression_wholegenome/tree/main#genome-assembly-and-annotation)
