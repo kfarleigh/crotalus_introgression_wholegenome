@@ -2938,6 +2938,385 @@ We estimated the admixture proportion (fd statistic; [Martin et al. (2015)](http
 - Estimated divergence measures with [pixy](https://pixy.readthedocs.io/en/latest/)
 - Processed and visualized results with [R](https://www.r-project.org/)
 
+# Crotalus genomic landscape of introgression sliding-window diversity and differentiation statistics
+Author: Keaka Farleigh, Ph.D.
+Date: May 8th, 2025
+Email: keakafarleigh@virginia.edu
+
+## Purpose
+
+This script will use calculate various selection statistics from vcf data. 
+
+## Location 
+
+This analysis was performed in the Schield lab on Xenomorph at the University of Virginia. Xenomorph is a system76 workstation running Ubuntu v22.04.3.
+
+
+### Input data 
+
+The data we will use as input are located at `/media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus`. The data is split into chromosomes for pixy analysis. We use the allsites vcf because dxy and pi require constant sites and variant sites.
+We need a popmap, which is a two column tab-delimited file. The first column contains the sample name, the second column contains the population (or species in our case).
+
+### Set up environment
+
+First, we activate pixy and make a directory to store the results. 
+```
+conda activate pixy
+mkdir /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pixy
+
+```
+
+### Set up population file
+
+We will get the names of all of the samples in the vcf. The we create the list in excel.
+
+```
+cd /media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus
+bcftools query -l crotalus_genus.allsites.final.chr1_scaffold_3_3contigs.vcf.gz
+
+```
+
+### Run pixy
+We will loop through the vcfs,
+```
+# Non-overlapping windows
+
+# 10 Kb
+nohup bash -c 'for i in `ls /media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus/*.vcf.gz | sed 's@\/media\/queen\/extradrive1\/crotalus_genomic_landscape\/vcf\/chrom-specific-genus\/@@g'`; do pixy --stats pi fst dxy --vcf /media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus/$i --populations /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pixy/Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --window_size 10000 --n_cores 4  --output_folder /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pixy/cgli_10kb --output_prefix $i; done' > ./log/pixy_10kb.txt &
+
+# 50 Kb
+nohup bash -c 'for i in `ls /media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus/*.vcf.gz | sed 's@\/media\/queen\/extradrive1\/crotalus_genomic_landscape\/vcf\/chrom-specific-genus\/@@g'`; do pixy --stats pi fst dxy --vcf /media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus/$i --populations /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pixy/Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --window_size 50000 --n_cores 4  --output_folder /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pixy/cgli_50kb --output_prefix $i; done' > ./log/pixy_50kb.txt &
+
+# 1 Mb
+nohup bash -c 'for i in `ls /media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus/*.vcf.gz | sed 's@\/media\/queen\/extradrive1\/crotalus_genomic_landscape\/vcf\/chrom-specific-genus\/@@g'`; do pixy --stats pi fst dxy --vcf /media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus/$i --populations /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pixy/Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --window_size 1000000 --n_cores 4  --output_folder /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pixy/cgli_1Mb --output_prefix $i; done' > ./log/pixy_1Mb.txt &
+
+# Chromosome 15 wasn't run, because there are many repeats at the beginning of the chromosome which are masked as missing in our vcf. The problem with this is that pixy interprets this as no invariant sites and throws an error. Let's bypass this and see if we get the same results on the other chromosomes.
+# 1 Mb
+nohup bash -c 'for i in `ls /media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus/*.vcf.gz | sed 's@\/media\/queen\/extradrive1\/crotalus_genomic_landscape\/vcf\/chrom-specific-genus\/@@g'`; do pixy --stats pi fst dxy --vcf /media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus/$i --populations /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pixy/Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --window_size 1000000 --n_cores 4 --bypass_invariant_check yes  --output_folder /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pixy/cgli_1Mb_invarbypass --output_prefix $i; done' > pixy_1Mb.invarbypass.log &
+```
+
+We had to separate some of our populations for the fd comparisons, meaning that we need to run pixy for each of those different population assignment files.
+
+```
+# lutosus-concolor & oreganus-helleri partitions
+nohup bash -c 'for i in `ls /media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus/*.vcf.gz | sed 's@\/media\/queen\/extradrive1\/crotalus_genomic_landscape\/vcf\/chrom-specific-genus\/@@g'`; do pixy --stats pi fst dxy --vcf /media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus/$i --populations /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_helleri_sub.txt --window_size 1000000 --n_cores 4 --bypass_invariant_check yes  --output_folder /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pixy/cgli_1Mb_lut_con --output_prefix $i; done' > pixy_1Mb.invarbypass.lut_con.log &
+
+# Code on line 65 may or may not be necessary
+nohup bash -c 'for i in `cat chrom_vcflist.txt | sed 's@\/media\/queen\/extradrive1\/crotalus_genomic_landscape\/vcf\/chrom-specific-genus\/@@g'`; do pixy --stats pi fst dxy --vcf /media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus/$i --populations /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_helleri_sub.txt --window_size 1000000 --n_cores 4 --bypass_invariant_check yes  --output_folder /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pixy/cgli_1Mb_lut_con --output_prefix $i; done' > pixy_1Mb.invarbypass.lut_con.log &
+
+
+# Oreganus north partition
+nohup bash -c 'for i in `ls /media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus/*.vcf.gz | sed 's@\/media\/queen\/extradrive1\/crotalus_genomic_landscape\/vcf\/chrom-specific-genus\/@@g'`; do pixy --stats pi fst dxy --vcf /media/queen/extradrive1/crotalus_genomic_landscape/vcf/chrom-specific-genus/$i --populations /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --window_size 1000000 --n_cores 4 --bypass_invariant_check yes  --output_folder /media/queen/extradrive1/crotalus_genomic_landscape/analysis/pixy/cgli_1Mb_oreganus --output_prefix $i; done' > pixy_1Mb.invarbypass.org.log &
+
+```
+
+### Run pixy with sliding windows
+First, we will generate bed files to define our windows. 
+
+```
+bedtools makewindows -g /media/queen/extradrive1/crotalus_pyrrhus_genome/C_pyrrhus_chrom.sizes -w 1000000 -s 100000 > c_pyrrhus_1Mb_100Kbstep.bed
+
+grep "chr" c_pyrrhus_1Mb_100Kbstep.bed > c_pyrrhus_1Mb_100Kbstep.filter.bed
+
+bedtools makewindows -g /media/queen/extradrive1/crotalus_pyrrhus_genome/C_pyrrhus_chrom.sizes -w 50000 -s 5000 > c_pyrrhus_50Kb_5Kbstep.bed
+
+grep "chr" c_pyrrhus_50Kb_5Kbstep.bed > c_pyrrhus_50Kb_5Kbstep.filter.bed
+
+bedtools makewindows -g /media/queen/extradrive1/crotalus_pyrrhus_genome/C_pyrrhus_chrom.sizes -w 10000 -s 1000 > c_pyrrhus_10Kb_1Kbstep.bed
+
+grep "chr" c_pyrrhus_10Kb_1Kbstep.bed > c_pyrrhus_10Kb_1Kbstep.filter.bed
+
+rm *step.bed
+
+
+```
+
+# Crotalus genomic landscape, introgression tests
+Author: Keaka Farleigh, Ph.D.
+Date: April 9th, 2025
+Email: keakafarleigh@virginia.edu
+
+## Purpose
+This script will conduct tests of introgression using [Dsuite](https://github.com/millanek/Dsuite) and [fD](https://github.com/simonhmartin/genomics_general).
+
+## Location 
+
+This analysis was performed in the Schield lab on Xenomorph at the University of Virginia. Xenomorph is a system76 workstation running Ubuntu v22.04.3.
+
+
+## Input data
+This script requires a vcf and population assignment file. We will use our vcf (`/media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.auto+chrZ-tmp.snps.focal.vcf.gz`)that was filtered to only include biallelic sites and no missing data.  
+
+### Set up environment
+First, we set up the directory structure and our environment.
+
+```
+cd /media/queen/extradrive1/crotalus_genomic_landscape/analysis
+
+mkdir fD
+
+```
+
+### fD
+Now, we will use scripts developed by Dr. Simon Martin. First we need to convert the vcf to the format that Dr. Martin's script requires.
+
+```
+cd crotalus_genomic_landscape/analysis/fD/
+
+git clone https://github.com/simonhmartin/genomics_general.git
+
+conda activate pixy
+
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/VCF_processing/parseVCF.py -i /media/queen/extradrive1/crotalus_genomic_landscape/vcf/crotalus_genus.noCV13.auto+chrZ-tmp.snps.focal.vcf.gz -o crotalus_genus_auto+chrZ.geno.gz > parsevcf.log &
+
+```
+
+Now, we will run fD tests using the same sliding windows as pixy.
+
+
+``` 
+
+# Run the fD tests 
+
+
+### Stephensi to continental pyrrhus
+# 10 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 stephensi -O atrox -o continental_pyrrhus_stephensi_10kb.csv -w 10000 -m 10 -s 10000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > steph_con_pyrr_10kb.log &
+
+# 50 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 stephensi -O atrox -o continental_pyrrhus_stephensi_50kb.csv -w 50000 -m 50 -s 50000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > steph_con_pyrr_50kb.log &
+
+# 1 Mb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 stephensi -O atrox -o continental_pyrrhus_stephensi_1Mb.csv -w 1000000 -m 100 -s 1000000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > steph_con_pyrr_1Mb.log &
+
+# 100 kb, 10 kb step
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 stephensi -O atrox -o continental_pyrrhus_stephensi_100Kb-10kbstep.csv -w 100000 -m 100 -s 10000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > steph_con_pyrr_100kb.10kb.log &
+
+# 500 kb, 50 kb step
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 stephensi -O atrox -o continental_pyrrhus_stephensi_500Kb-50kbstep.csv -w 500000 -m 50 -s 50000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > steph_con_pyrr_500kb.50kb.log &
+
+# 750 kb, 75 kb step
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 stephensi -O atrox -o continental_pyrrhus_stephensi_750Kb-75kbstep.csv -w 750000 -m 50 -s 75000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > steph_con_pyrr_750kb.75kb.log &
+
+# 750 kb, 5 kb step
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 stephensi -O atrox -o continental_pyrrhus_stephensi_750Kb-5kbstep.csv -w 750000 -m 50 -s 5000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > steph_con_pyrr_750kb.5kb.log &
+
+
+### Tigris to continental pyrrhus 
+# 10 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 tigris -O atrox -o continental_pyrrhus_tigris_10kb.csv -w 10000 -m 10 -s 10000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > tig_con_pyrr_10kb.log &
+
+# 50 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 tigris -O atrox -o continental_pyrrhus_tigris_50kb.csv -w 50000 -m 50 -s 50000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > tig_con_pyrr_50kb.log &
+
+# 1 Mb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 tigris -O atrox -o continental_pyrrhus_tigris_1Mb.csv -w 1000000 -m 100 -s 1000000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > tig_con_pyrr_1Mb.log &
+
+# 100 kb, 10kb step
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 tigris -O atrox -o continental_pyrrhus_tigris_100Kb-10kbstep.csv -w 100000 -m 100 -s 10000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > tig_con_pyrr_100kb.10kb.log &
+
+# 500 kb, 50kb step
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 tigris -O atrox -o continental_pyrrhus_tigris_500Kb-50kbstep.csv -w 500000 -m 50 -s 50000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > tig_con_pyrr_500kb.50kb.log &
+
+# 750 kb, 75kb step
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 tigris -O atrox -o continental_pyrrhus_tigris_750Kb-75kbstep.csv -w 750000 -m 50 -s 75000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > tig_con_pyrr_750kb.75kb.log &
+
+# 750 kb, 5kb step
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 tigris -O atrox -o continental_pyrrhus_tigris_750Kb-5kbstep.csv -w 750000 -m 50 -s 5000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > tig_con_pyrr_750kb.5kb.log &
+
+### Viridis to concolor
+# 10 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 lutosus -P2 concolor -P3 viridis -O atrox -o viridis_concolor_10kb.csv -w 10000 -m 10 -s 10000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > vir_con_10kb.log &
+
+# 50 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 lutosus -P2 concolor -P3 viridis -O atrox -o viridis_concolor_50kb.csv -w 50000 -m 50 -s 50000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > vir_con_50kb.log &
+
+# 1 Mb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 lutosus -P2 concolor -P3 viridis -O atrox -o viridis_concolor_1Mb.csv -w 1000000 -m 100 -s 1000000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > vir_con_1Mb.log &
+
+
+### Oreganus to lutosus
+# 10 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 concolor -P2 lutosus -P3 oreganus -O atrox -o oreganus_lutosus_10kb.csv -w 10000 -m 10 -s 10000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > org_lut_10kb.log &
+
+# 50 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 concolor -P2 lutosus -P3 oreganus -O atrox -o oreganus_lutosus_50kb.csv -w 50000 -m 50 -s 50000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > org_lut_50kb.log &
+
+# 1 Mb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 concolor -P2 lutosus -P3 oreganus -O atrox -o oreganus_lutosus_1Mb.csv -w 1000000 -m 100 -s 1000000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > org_lut_1Mb.log &
+
+
+### Lutosus to stephensi 
+# 10 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 pyrrhus_continental -P2 stephensi -P3 lutosus -O atrox -o lutosus_stephensi_10kb.csv -w 10000 -m 10 -s 10000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > lut_steph_10kb.log &
+
+# 50 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 pyrrhus_continental -P2 stephensi -P3 lutosus -O atrox -o lutosus_stephensi_50kb.csv -w 50000 -m 50 -s 50000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > lut_steph_50kb.log &
+
+# 1 Mb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 pyrrhus_continental -P2 stephensi -P3 lutosus -O atrox -o lutosus_stephensi_1Mb.csv -w 1000000 -m 100 -s 1000000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > lut_steph_1Mb.log &
+
+### Oreganus to helleri
+# 1 Mb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 helleri_s -P2 helleri_n -P3 oreganus_s -O atrox -o oreganus_helleri_1Mb.csv -w 1000000 -m 100 -s 1000000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_helleri_sub.txt --writeFailedWindows > org_hel_1Mb.log &
+
+# 1Mb, 100 kb step
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 helleri_s -P2 helleri_n -P3 oreganus_s -O atrox -o oreganus_helleri_1Mb-100kb.csv -w 1000000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_helleri_sub.txt --writeFailedWindows > org_hel_1Mb-100kb.log &
+
+# 100 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 helleri_s -P2 helleri_n -P3 oreganus_s -O atrox -o oreganus_helleri_100Kb.csv -w 100000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_helleri_sub.txt --writeFailedWindows > org_hel_100kb.log &
+
+# 100 kb, 10 kb step 
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 helleri_s -P2 helleri_n -P3 oreganus_s -O atrox -o oreganus_helleri_100Kb-10kbstep.csv -w 100000 -m 100 -s 10000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_helleri_sub.txt --writeFailedWindows > org_hel_100kb.log &
+
+# 500 kb, 50 kb step 
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 helleri_s -P2 helleri_n -P3 oreganus_s -O atrox -o oreganus_helleri_500Kb-50kbstep.csv -w 500000 -m 50 -s 50000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_helleri_sub.txt --writeFailedWindows > org_hel_500kb.50kb.log &
+
+# 750 kb, 75 kb step 
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 helleri_s -P2 helleri_n -P3 oreganus_s -O atrox -o oreganus_helleri_750Kb-75kbstep.csv -w 750000 -m 50 -s 75000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_helleri_sub.txt --writeFailedWindows > org_hel_750kb.75kb.log &
+
+# 750 kb, 5 kb step 
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 helleri_s -P2 helleri_n -P3 oreganus_s -O atrox -o oreganus_helleri_750Kb-5kbstep.csv -w 750000 -m 50 -s 5000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_helleri_sub.txt --writeFailedWindows > org_hel_750kb.5kb.log &
+
+### Stephensi to helleri
+# 1 Mb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 stephensi -O atrox -o stephensi_helleri_1Mb.csv -w 1000000 -m 100 -s 1000000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > steph_hel_1Mb.log &
+
+# 1Mb, 100kb step
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 stephensi -O atrox -o stephensi_helleri_1Mb-100kb.csv -w 1000000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > steph_hel_1Mb-100kb.log &
+
+# 100 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 stephensi -O atrox -o stephensi_helleri_100Kb.csv -w 100000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > steph_hel_100kb.log &
+
+### Lutosus to concolor 
+# 1 Mb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 concolor_e -P2 concolor_w -P3 lutosus_s -O atrox -o lutosus_concolor_1Mb.csv -w 1000000 -m 100 -s 1000000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_helleri_sub.txt --writeFailedWindows > lut_con_1Mb.log &
+
+# 1Mb, 100kb step
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 concolor_e -P2 concolor_w -P3 lutosus_s -O atrox -o lutosus_concolor_1Mb-100kb.csv -w 1000000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_helleri_sub.txt --writeFailedWindows > lut_con_1Mb-100kb.log &
+
+# 100 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 concolor_e -P2 concolor_w -P3 lutosus_s -O atrox -o lutosus_concolor_100Kb.csv -w 100000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_helleri_sub.txt --writeFailedWindows > lut_con_100Kb.log &
+
+### Viridis to lutosus
+# 1 Mb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 concolor -P2 lutosus -P3 viridis -O atrox -o viridis_lutosus_1Mb.csv -w 1000000 -m 100 -s 1000000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > vir_lut_1Mb.log &
+
+# 1 Mb, 100kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 concolor -P2 lutosus -P3 viridis -O atrox -o viridis_lutosus_1Mb-100kb.csv -w 1000000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > vir_lut_1Mb-100kb.log &
+
+# 100 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 concolor -P2 lutosus -P3 viridis -O atrox -o viridis_lutosus_100Kb.csv -w 100000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > vir_lut_100Kb.log &
+
+### Viridis to oreganus 
+# 1 Mb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 helleri -P2 oreganus -P3 viridis -O atrox -o viridis_oreganus_1Mb.csv -w 1000000 -m 100 -s 1000000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > vir_org_1Mb.log &
+
+# 1 Mb, 100kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 helleri -P2 oreganus -P3 viridis -O atrox -o viridis_oreganus_1Mb-100kb.csv -w 1000000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > vir_org_1Mb-100kb.log &
+
+# 100 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 helleri -P2 oreganus -P3 viridis -O atrox -o viridis_oreganus_100Kb.csv -w 100000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > vir_org_100Kb.log &
+
+
+### Pyrrhus baja 1 to helleri
+# 1 Mb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 pyrrhus_baja1 -O atrox -o pyrrhus_baja1_helleri_1Mb.csv -w 1000000 -m 100 -s 1000000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > pyrr_b1_hel_1Mb.log &
+
+# 1 Mb, 100kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 pyrrhus_baja1 -O atrox -o pyrrhus_baja1_helleri_1Mb-100kb.csv -w 1000000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > pyrr_b1_hel_1Mb-100kb.log &
+
+# 100 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 pyrrhus_baja1 -O atrox -o pyrrhus_baja1_helleri_100Kb.csv -w 100000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > pyrr_b1_hel_100kb.log &
+
+### Pyrrhus baja 2 to helleri
+# 1 Mb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 pyrrhus_baja2 -O atrox -o pyrrhus_baja2_helleri_1Mb.csv -w 1000000 -m 100 -s 1000000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > pyrr_b2_hel_1Mb.log &
+
+# 1 Mb, 100kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 pyrrhus_baja2 -O atrox -o pyrrhus_baja2_helleri_1Mb-100kb.csv -w 1000000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > pyrr_b2_hel_1Mb-100kb.log &
+
+
+# 100 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 pyrrhus_baja2 -O atrox -o pyrrhus_baja2_helleri_100Kb.csv -w 100000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > pyrr_b2_hel_100kb.log &
+
+### Pyrrhus continental to helleri
+# 1 Mb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 pyrrhus_continental -O atrox -o pyrrhus_continental_helleri_1Mb.csv -w 1000000 -m 100 -s 1000000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > pyrr_con_hel_1Mb.log &
+
+# 1Mb, 100kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 pyrrhus_continental -O atrox -o pyrrhus_continental_helleri_1Mb-100kb.csv -w 1000000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > pyrr_con_hel_1Mb-100kb.log &
+
+# 100 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 pyrrhus_continental -O atrox -o pyrrhus_continental_helleri_100Kb.csv -w 100000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > pyrr_con_hel_100kb.log &
+
+# 750 kb, 75 kb step 
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 pyrrhus_continental -O atrox -o pyrrhus_continental_helleri_750Kb-75kbstep.csv -w 750000 -m 50 -s 75000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > pyrr_con_hel_75Kb-75kb.log &
+
+# 750 kb, 5 kb step 
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 pyrrhus_continental -O atrox -o pyrrhus_continental_helleri_750Kb-5kbstep.csv -w 750000 -m 50 -s 5000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > pyrr_con_hel_75Kb-5kb.log &
+
+
+### Mitchelli to helleri
+# 1 Mb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 mitchellii -O atrox -o mitchelli_helleri_1Mb.csv -w 1000000 -m 100 -s 1000000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > mitch_hel_1Mb.log &
+
+# 1 Mb, 100kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 mitchellii -O atrox -o mitchelli_helleri_1Mb-100kb.csv -w 1000000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > mitch_hel_1Mb-100kb.log &
+
+# 100 kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 oreganus -P2 helleri -P3 mitchellii -O atrox -o mitchelli_helleri_100Kb.csv -w 100000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_oreganus_sub.txt --writeFailedWindows > mitch_hel_100kb.log &
+
+```
+
+Let's run the 1 Mb windows with a 100kb slide for visualization
+
+```
+# 1 Mb, 100 kb slide
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 stephensi -O atrox -o continental_pyrrhus_stephensi_1Mb-100kb.csv -w 1000000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > steph_con_pyrr_1Mb-100kb.log &
+
+# 1 Mb, 100 kb slide
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 tigris -O atrox -o continental_pyrrhus_tigris_1Mb-100kb.csv -w 1000000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > tig_con_pyrr_1Mb-100kb.log &
+
+# 1 Mb, 100 kb slide
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 lutosus -P2 concolor -P3 viridis -O atrox -o viridis_concolor_1Mb-100kb.csv -w 1000000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > vir_con_1Mb-100kb.log &
+
+# 1 Mb, 100 kb slide
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 concolor -P2 lutosus -P3 oreganus -O atrox -o oreganus_lutosus_1Mb-100kb.csv -w 1000000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > org_lut_1Mb-100kb.log &
+
+# 1 Mb, 100 kb slide
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 pyrrhus_continental -P2 stephensi -P3 lutosus -O atrox -o lutosus_stephensi_1Mb-100kb.csv -w 1000000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > lut_steph_1Mb-100kb.log &
+
+
+```
+
+Let's run the tests with a 100Kb window for permutation tests 
+
+```
+### Stephensi to continental pyrrhus
+# 100 Kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 stephensi -O atrox -o continental_pyrrhus_stephensi_100Kb.csv -w 100000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > steph_con_pyrr_100Kb.log &
+
+### Tigris to continental pyrrhus 
+# 100 Kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 mitchellii -P2 pyrrhus_continental -P3 tigris -O atrox -o continental_pyrrhus_tigris_100Kb.csv -w 100000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > tig_con_pyrr_100Kb.log &
+
+### Viridis to concolor
+# 100 Kb 
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 lutosus -P2 concolor -P3 viridis -O atrox -o viridis_concolor_100Kb.csv -w 100000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > vir_con_100Kb.log &
+
+
+### Oreganus to lutosus
+# 100 Kb 
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 concolor -P2 lutosus -P3 oreganus -O atrox -o oreganus_lutosus_100Kb.csv -w 100000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > org_lut_100Kb.log &
+
+
+### Lutosus to stephensi 
+# 100 Kb
+nohup python3 /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/genomics_general/ABBABABAwindows.py -g /media/queen/extradrive1/crotalus_genomic_landscape/analysis/fD/crotalus_genus_auto+chrZ.geno.gz -f phased -P1 pyrrhus_continental -P2 stephensi -P3 lutosus -O atrox -o lutosus_stephensi_100Kb.csv -w 100000 -m 100 -s 100000 --popsFile ./Crotalus_genomic_landscape_pixypopmap_noCV13_noangelensis_ingroup.txt --writeFailedWindows > lut_steph_100Kb.log &
+
+```
+
 
 
 
