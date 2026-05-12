@@ -4,7 +4,9 @@
 
 **WARNING, LINKS MAY NOT WORK UNTIL AFTER THE MANUSCRIPT HAS BEEN PUBLISHED.**
 
-**PLEASE VISIT OUR [WIKI](https://github.com/kfarleigh/crotalus_introgression_wholegenome/wiki); IT IS MUCH EASIER TO NAVIGATE!** 
+**Please visit our [wiki](https://github.com/kfarleigh/crotalus_introgression_wholegenome/wiki) to view our computational pipeline!**
+
+Reach out to Keaka Farleigh (keakafarleigh@virginia.edu;keakafarleigh@gmail.com) with any questions. 
 
 
 
