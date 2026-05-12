@@ -4,6 +4,21 @@
 
 **WARNING, LINKS MAY NOT WORK UNTIL AFTER THE MANUSCRIPT HAS BEEN PUBLISHED.**
 
+
+
+
+**PLEASE VISIT OUR [WIKI](https://github.com/kfarleigh/crotalus_introgression_wholegenome/wiki); IT IS MUCH EASIER TO NAVIGATE!** 
+
+
+
+
+
+
+
+
+
+
+
 I am in the process of uploading scripts to this repository to ensure that they are properly annotated, but please reach out if you have any questions.
 
 This repository contains the computational workflow and scripts for [Farleigh et al., (*in press at PNAS*)](). Please email Keaka Farleigh (keakafarleigh@virginia.edu; keakafarleigh@gmail.com) if you have any questions. 
@@ -20,7 +35,7 @@ Farleigh, K., D.K. Highland, M.G. Alderman, Y.Z. Francioli, S.R. Hirst, E.M. Fab
 ## Genomic data
 
 
-The genomic data for this project are deposited as parts of BioProjects [PRJNA1454467](), [PRJNA593834](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA593834), and [PRJNA1150930](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA1150930). The genome for this project is deposited at [PRJNA1460337]().
+The genomic data for this project are deposited as parts of BioProjects [PRJNA1454467](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA1454467), [PRJNA593834](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA593834), and [PRJNA1150930](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA1150930). The genome for this project is deposited at [PRJNA1460337]().
 
 
 
